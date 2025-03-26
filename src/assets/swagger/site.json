@@ -1,0 +1,207 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Elexify Online APIs",
+    "termsOfService": "",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1/admin"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    }
+  ],
+  "paths": {
+    "/admin/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User Login: Validate Credentials: Login",
+        "description": "Used for user login",
+        "parameters": [],
+        "requestBody": {
+          "$ref": "./resources/site/auth/login.json"
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/successResponseObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized Access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serverErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "serverErrorResponse": {
+        "title": "Server Error Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Something Went Wrong"
+        }
+      },
+      "badRequestResponse": {
+        "title": "Bad Request Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Bad request"
+        }
+      },
+      "forbiddenResponse": {
+        "title": "Forbidden Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Forbidden access"
+        }
+      },
+      "unauthorizedResponse": {
+        "title": "Unauthorized Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Unauthorized Access"
+        }
+      },
+      "successResponseObject": {
+        "title": "Success Response",
+        "type": "object"
+      }
+    },
+    "parameters": {
+      "AcceptLanguage": {
+        "name": "accept-language",
+        "in": "header",
+        "description": "Incase we want to send current language along our request",
+        "schema": {
+          "type": "string",
+          "default": "en"
+        }
+      },
+      "ApiKey": {
+        "name": "x-api-key",
+        "in": "header",
+        "description": "Incase we want to send current custom api key along our request",
+        "schema": {
+          "type": "string",
+          "default": ""
+        }
+      },
+      "AccessToken": {
+        "name": "token",
+        "in": "header",
+        "description": "Incase we want to send current custom access token along our request",
+        "schema": {
+          "type": "string",
+          "default": ""
+        }
+      },
+      "Id": {
+        "name": "id",
+        "required": true,
+        "in": "path",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Name": {
+        "name": "name",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "XFormdataId": {
+        "name": "x-formdata-id",
+        "in": "header",
+        "required": true,
+        "description": "Incase we want to send x-formdata-id for access",
+        "schema": {
+          "type": "integer",
+          "default": ""
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "in": "header",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

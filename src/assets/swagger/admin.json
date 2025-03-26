@@ -1,0 +1,306 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "ADMIN API",
+    "termsOfService": "",
+    "version": "1.0.0",
+    "description": "Elexify Admin Service"
+  },
+  "servers": [
+    {
+      "url": "/api/v1/admin",
+      "description": "Base API Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Category"
+    }
+  ],
+  "paths": {
+    "/category/list": {
+      "get": {
+        "tags": ["Category"],
+        "summary": "List all categories",
+        "description": "Fetches a list of all product categories available in the system.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search categories by name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of categories per page",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort categories by name or created date",
+            "schema": {
+              "type": "string",
+              "enum": ["name", "createdAt"],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (asc or desc)",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/categoryResponse"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of categories"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "Current page number"
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "description": "Number of items per page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized Access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serverErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "ApiKeyAuth": [], "bearerAuth": [] }]
+      }
+    },
+    "/category/add": {
+      "post": {
+        "tags": ["Category"],
+        "summary": "Add a new category",
+        "description": "Creates a new product category in the system",
+        "requestBody": {
+          "$ref": "./resources/admin/master/category/add.json"
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/successResponseObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized Access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serverErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "ApiKeyAuth": [], "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "serverErrorResponse": {
+        "title": "Server Error Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Something Went Wrong"
+        }
+      },
+      "badRequestResponse": {
+        "title": "Bad Request Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Bad request"
+        }
+      },
+      "forbiddenResponse": {
+        "title": "Forbidden Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Forbidden access"
+        }
+      },
+      "unauthorizedResponse": {
+        "title": "Unauthorized Response",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "error": "Unauthorized Access"
+        }
+      },
+      "successResponseObject": {
+        "title": "Success Response",
+        "type": "object"
+      }
+    },
+    "requestBodies": {
+      "loginRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "user@example.com"
+                },
+                "password": {
+                  "type": "string",
+                  "format": "password",
+                  "example": "password123"
+                }
+              },
+              "required": ["email", "password"]
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
