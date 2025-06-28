@@ -19,6 +19,7 @@ import { v1AuthRouter } from "./routes/auth/index.js";
 import { v1UserRouter } from "./routes/user/index.js";
 import { v1AdminRouter } from "./routes/admin/index.js";
 import { v1SiteRouter } from "./routes/site/index.js";
+import { v1WebhookRouter } from "./routes/webhook/index.js";
 // import indexRoutes from "./routes/index.js";
 import { fileURLToPath } from "url";
 import { envs } from "./config/index.js";
@@ -91,6 +92,12 @@ app.use(
   middleware.accessTokenIfAny,
   middleware.validateApiKey,
   v1SiteRouter
+);
+
+app.use(
+  `${envs.basePath}/api/v1/webhook`,
+  middleware.accessTokenIfAny,
+  v1WebhookRouter
 );
 
 app.use(`${envs.basePath}/public`, express.static("./public"));

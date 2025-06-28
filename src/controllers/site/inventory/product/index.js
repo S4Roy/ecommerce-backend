@@ -4,5 +4,6 @@ import { toggleWishList } from "./toggleWishList.js";
 import { cartManage } from "./cartManage.js";
 import { carts } from "./carts.js";
 import { counts } from "./counts.js";
+import { update } from "./update.js";
 
-export { list, wishlist, toggleWishList, cartManage, carts, counts };
+export { list, wishlist, toggleWishList, cartManage, carts, counts, update };
