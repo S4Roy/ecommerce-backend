@@ -33,15 +33,15 @@ export const importItems = async (req, res, next) => {
     for (const row of normalizedData) {
       const ID = row["ID"]?.trim();
       if (!ID) continue;
+      const name = row["Name"];
 
       // 🚫 Skip if Product already exists by ID
-      const existingProduct = await Product.findOne({ id: ID });
+      const existingProduct = await Product.findOne({ id: ID, name: name });
       if (existingProduct) {
-        console.log(`Skipping existing product ID: ${ID}`);
+        console.log(`Skipping existing product ID: ${ID} ${name}`);
         continue;
       }
 
-      const name = row["Name"];
       const sku = row["SKU"];
       const current_stock = row["Stock"];
       const description = row["Description"] || null;
