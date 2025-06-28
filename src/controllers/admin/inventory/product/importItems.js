@@ -45,7 +45,11 @@ export const importItems = async (req, res, next) => {
         console.log(`Skipping existing product ID: ${ID}`);
         continue;
       }
-
+      const type = row["Type"];
+      if (type == "variation") {
+        console.log(`variation product by name: ${name}`);
+        continue;
+      }
       const sku = row["SKU"];
       const current_stock = row["Stock"];
       const description = row["Description"] || null;
