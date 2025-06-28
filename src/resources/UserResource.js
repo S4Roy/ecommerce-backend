@@ -17,10 +17,6 @@ class UserResource extends Resource {
       updated_at: this.updated_at || null,
     };
 
-    if (this.profile_image) {
-      doc.image_path = `${global.CONFIG.app.url}/public/uploads/operators/${this.profile_image}`;
-    }
-
     return doc;
   }
 }

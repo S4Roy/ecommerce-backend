@@ -42,7 +42,9 @@ export const envs = {
   s3: {
     BUCKET_NAME: process.env.S3_BUCKET_NAME || "",
     BUCKET_URL: process.env.S3_BUCKET_URL || "",
+    BASE_URL: `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/`,
   },
+  NO_IMAGE: `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/noimage.png`,
   DEFAULT_LANGUAGE: process.env.DEFAULT_LANGUAGE || "en",
   maxFileUploadSize: process.env.maxFileUploadSize || 20,
   siteUrl: process.env.siteUrl || "",
@@ -62,5 +64,8 @@ export const envs = {
   SWAGGER_UI_ACCESS: {
     USER: process.env.SWAGGER_UI_ACCESS_USER || "",
     PASSWORD: process.env.SWAGGER_UI_ACCESS_PASSWORD || "",
+  },
+  pagination: {
+    limit: 10,
   },
 };

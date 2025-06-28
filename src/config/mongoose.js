@@ -7,8 +7,6 @@ mongoose.Promise = global.Promise;
 
 const connectDB = async () => {
   try {
-    console.log(mongoDBUrl);
-
     await mongoose.connect(mongoDBUrl, {
       useUnifiedTopology: true,
       useNewUrlParser: true,

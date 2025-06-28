@@ -1,5 +1,6 @@
 import stream from "stream";
 import { awsService } from "../index.js";
+import { envs } from "../../config/index.js";
 
 const S3 = new awsService.AWS.S3();
 
@@ -33,6 +34,26 @@ class S3Handler {
         ACL: "public-read",
       }).promise(),
     };
+  }
+  async uploadToS3(file, folder = "uploads") {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        return reject(new Error("No file provided"));
+      }
+
+      const uploadParams = {
+        Bucket: envs.s3.BUCKET_NAME,
+        Key: `${folder}`,
+        Body: file.data,
+        ContentType: file.mimetype,
+        ACL: "public-read", // Change to "private" if needed
+      };
+
+      S3.upload(uploadParams, (err, data) => {
+        if (err) reject(err);
+        else resolve(data.Location);
+      });
+    });
   }
 }
 

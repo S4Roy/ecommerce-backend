@@ -1,35 +1,35 @@
-import { userService, userRoleService } from "../services/index.js";
-import { envs } from "../config/index.js";
+import { userService } from "../services/index.js";
 
 /**
- * This function is used for validating authorization header if login
- * @param req
- * @param res
- * @param next
+ * Middleware to optionally validate the Authorization header and decode user token
+ * If no token is provided, it allows guest access via `x-guest-id`.
  */
 export const accessTokenIfAny = async (req, res, next) => {
   try {
-    const token = req.headers.token;
-    if (token) {
-      const decodedData = userService.verifyToken(token, envs.jwt.accessToken.secret);
-      if (decodedData) {
-        const userDetails = await userService.getByEmail(decodedData.email);
-        if (userDetails) {
-          const userRole = await userRoleService.getUserRole(userDetails.id);
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+    const guest_id = req.headers["x-guest-id"] || null;
 
-          req["userDetails"] = {
-            userId: userDetails.id,
-            name: userDetails.name,
-            email: userDetails.email,
-            user_session_id: "",
-            user_type: userRole ? userRole.role_name : "",
-            user_role_id: userRole ? userRole.role_id : "",
-          };
-        }
+    if (token) {
+      const decodedData = await userService.verifyToken(token);
+      if (decodedData && decodedData.user_id) {
+        req.auth = {
+          user_id: decodedData.user_id,
+          email: decodedData.email,
+          role: decodedData.role,
+          guest_id: guest_id,
+        };
       }
+    } else if (guest_id) {
+      req.auth = { guest_id };
     }
+
     next();
   } catch (error) {
-    next(error);
+    // Log and continue as guest (optional) or block request
+    console.error("Token verification failed:", error.message);
+    next(); // Allow guest access even if token is invalid
   }
 };

@@ -1,6 +1,8 @@
 /**
  * Middleware to validate X-API-KEY header.
  */
+import { StatusError } from "../config/index.js";
+
 export const validateApiKey = (req, res, next) => {
   try {
     const apiKey = req.headers["x-api-key"];

@@ -16,6 +16,7 @@ const UserSchema = new Schema(
         "customer",
         "vendor",
         "operator",
+        "user",
       ],
     },
     name: {

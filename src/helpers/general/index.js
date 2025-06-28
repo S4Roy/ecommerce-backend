@@ -4,7 +4,7 @@
 // import { getRandomNumbers } from "./getRandomNumbers.js";
 // import { chartArrayFormat } from "./chartArrayFormat.js";
 // import { genderList } from "./genderList.js";
-// import { generateSlugName } from "./generateSlugName.js";
+import { generateSlugName } from "./generateSlugName.js";
 // import { downloadFileFromUrl } from "./downloadFileFromUrl.js";
 // import { formatNumber } from "./formatNumber.js";
 // import { checkStringForNumbers } from "./checkStringForNumbers.js";
@@ -16,6 +16,7 @@
 // import { formatVideoDuration } from "./formatVideoDuration.js";
 // import { getRoleNameByKey } from "./getRoleNameByKey.js";
 // import { sortDaysOfWeek } from "./sortDaysOfWeek.js";
+import { sanitizeObjectId } from "./sanitizeObjectId.js";
 import { bcryptMake } from "./bcryptMake.js";
 import { bcryptCheck } from "./bcryptCheck.js";
 
@@ -28,7 +29,7 @@ export {
   // getRandomNumbers,
   // chartArrayFormat,
   // genderList,
-  // generateSlugName,
+  generateSlugName,
   // downloadFileFromUrl,
   // formatNumber,
   // checkStringForNumbers,
@@ -40,4 +41,5 @@ export {
   // formatVideoDuration,
   // getRoleNameByKey,
   // sortDaysOfWeek,
+  sanitizeObjectId,
 };

@@ -5,8 +5,8 @@ import { envs } from "../../config/index.js";
  * Generate access token
  * @param details
  */
-export const generateTokens = async (email) => {
-  const accessToken = jwt.sign({ email }, envs.jwt.accessToken.secret, {
+export const generateTokens = async (data) => {
+  const accessToken = jwt.sign(data, envs.jwt.accessToken.secret, {
     expiresIn: envs.jwt.accessToken.expiry,
   });
 

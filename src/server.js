@@ -16,7 +16,9 @@ import i18n from "i18n";
 // import db from "./config/database.js";
 // import pusherConfig from "./config/pusher.js";
 import { v1AuthRouter } from "./routes/auth/index.js";
-// import v1AdminRouter from "./routes/api/v1/admin/index.js";
+import { v1UserRouter } from "./routes/user/index.js";
+import { v1AdminRouter } from "./routes/admin/index.js";
+import { v1SiteRouter } from "./routes/site/index.js";
 // import indexRoutes from "./routes/index.js";
 import { fileURLToPath } from "url";
 import { envs } from "./config/index.js";
@@ -44,7 +46,6 @@ app.use(i18n.init); // ✅ Middleware for translations
 //   pusher: pusherConfig,
 //   DEMO_AC: "64895d42711473576ce39a7b",
 // };
-// // console.log(global.CONFIG.db.collections);
 
 // // Initializing Pusher
 // global.pusher = new Pusher({
@@ -65,7 +66,6 @@ app.use(morganConf);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(i18n.init);
 app.use(fileUpload());
 app.use(express.static("public"));
 app.use(bearerToken());
@@ -74,19 +74,24 @@ app.use(StatusSuccess);
 // app.use(`${envs.basePath}/`, indexRoutes);
 app.use(`${envs.basePath}/api/v1/auth`, v1AuthRouter);
 
-// app.use(
-//   `${envs.basePath}/api/v1/admin`,
-//   middleware.validateApiKey,
-//   middleware.validateAccessToken,
-//   middleware.checkRole([
-//     "superadmin",
-//     "manager",
-//     "operator",
-//     "supervisor",
-//     "staff",
-//   ]),
-//   v1AdminRouter
-// );
+app.use(
+  `${envs.basePath}/api/v1/admin`,
+  middleware.validateApiKey,
+  middleware.validateAccessToken,
+  v1AdminRouter
+);
+app.use(
+  `${envs.basePath}/api/v1/user`,
+  middleware.validateApiKey,
+  middleware.validateAccessToken,
+  v1UserRouter
+);
+app.use(
+  `${envs.basePath}/api/v1/site`,
+  middleware.accessTokenIfAny,
+  middleware.validateApiKey,
+  v1SiteRouter
+);
 
 app.use(`${envs.basePath}/public`, express.static("./public"));
 
@@ -102,6 +107,7 @@ const swaggerOptions = {
     urls: [
       { url: "/api-docs/assets/auth.json", name: "AUTH API - v1" },
       { url: "/api-docs/assets/site.json", name: "SITE API - v1" },
+      { url: "/api-docs/assets/user.json", name: "USER API - v1" },
       { url: "/api-docs/assets/admin.json", name: "ADMIN API - v1" },
       { url: "/api-docs/assets/debug.json", name: "DEBUG API - v1" },
     ],

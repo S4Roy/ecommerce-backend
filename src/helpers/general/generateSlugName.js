@@ -1,12 +1,21 @@
-import urlSlug from "url-slug";
+import { convert } from "url-slug";
 
-export const generateSlugName = async (slugName, regenarate = false) => {
-  if (regenarate === true) {
-    const regex = /\d+/g;
-    const matches = slugName.match(regex) ? slugName.match(regex) : "";
-    const matc = matches && matches[0] ? Number(matches[0]) : 0;
-    return slugName + (matc + 1);
-  } else {
-    return slugName ? urlSlug(slugName) : "";
+/**
+ * Generates a unique slug name.
+ * If `regenarate` is true, increments the number at the end of the slug.
+ *
+ * @param {string} slugName - The base slug string.
+ * @param {boolean} [regenarate=false] - Whether to regenerate the slug.
+ * @returns {string} - The generated slug.
+ */
+export const generateSlugName = (slugName, regenarate = false) => {
+  if (!slugName) return "";
+
+  if (regenarate) {
+    const match = slugName.match(/-(\d+)$/); // Find trailing number
+    const number = match ? parseInt(match[1], 10) + 1 : 1;
+    return slugName.replace(/-\d+$/, "") + `-${number}`;
   }
+
+  return convert(slugName, { separator: "-" }); // Correct usage
 };

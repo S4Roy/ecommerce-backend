@@ -21,8 +21,6 @@ export const resetPassword = async (req, res, next) => {
 
     // Hash New Password
     const hashedPassword = await generalHelper.bcryptMake(new_password);
-    console.log(hashedPassword);
-
     await User.findByIdAndUpdate(userId, { password: hashedPassword });
 
     res.status(200).json({

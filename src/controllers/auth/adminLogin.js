@@ -44,7 +44,6 @@ export const adminLogin = async (req, res, next) => {
         req.__("The password you entered is incorrect")
       );
     }
-
     // Generate JWT Token
     const token = await userService.generateTokens({
       user_id: user._id,
