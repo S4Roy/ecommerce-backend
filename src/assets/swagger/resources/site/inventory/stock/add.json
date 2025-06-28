@@ -4,13 +4,7 @@
     "multipart/form-data": {
       "schema": {
         "type": "object",
-        "required": [
-          "product",
-          "quantity",
-          "type",
-          "cost_price",
-          "selling_price"
-        ],
+        "required": ["product", "quantity", "type", "cost_price", "sale_price"],
         "properties": {
           "product": {
             "type": "string",
@@ -34,7 +28,7 @@
             "nullable": true,
             "description": "Cost price must be between 0 and 1000"
           },
-          "selling_price": {
+          "sale_price": {
             "type": "number",
             "minimum": 0,
             "maximum": 1000,

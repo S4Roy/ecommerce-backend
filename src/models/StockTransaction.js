@@ -28,7 +28,7 @@ const StockTransactionSchema = new Schema(
       enum: ["order", "purchase", "manual", "return"],
       default: "manual",
     },
-    mrp: {
+    regular_price: {
       type: Number,
       default: 0, // Useful for avg. cost/profit
     },
@@ -36,7 +36,7 @@ const StockTransactionSchema = new Schema(
       type: Number,
       default: 0, // Useful for avg. cost/profit
     },
-    selling_price: {
+    sale_price: {
       type: Number,
       default: 0, // Useful for avg. cost/profit
     },

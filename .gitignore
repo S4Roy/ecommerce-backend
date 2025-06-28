@@ -19,6 +19,7 @@ pm2.log
 dist/
 build/
 .env
+.env_dev
 .env.local
 .env.development
 .env.production

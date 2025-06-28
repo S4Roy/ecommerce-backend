@@ -6,27 +6,32 @@ const { Schema, model, Types } = mongoose;
 
 const ProductSchema = new Schema(
   {
-    // sku: {
-    //   type: String,
-    //   required: true,
-    //   unique: true,
-    //   uppercase: true,
-    //   trim: true,
-    // },
+    id: {
+      type: String,
+      default: "",
+    },
+    sku: {
+      type: String,
+      // required: true,
+      unique: true,
+      // uppercase: true,
+      trim: true,
+      default: "",
+    },
     cost_price: {
       type: Number,
       required: true,
       min: 0,
       default: 0,
     },
-    mrp: {
+    regular_price: {
       type: Number,
       min: 0,
       default: 0,
     },
-    selling_price: {
+    sale_price: {
       type: Number,
-      required: true,
+      required: false,
       min: 0,
       default: 0,
     },
@@ -63,7 +68,8 @@ const ProductSchema = new Schema(
     brand: {
       type: Types.ObjectId,
       ref: "brands",
-      required: true, // Ensure products always have a brand
+      required: false, // Ensure products always have a brand
+      default: null,
     },
     categories: [
       {
@@ -85,14 +91,6 @@ const ProductSchema = new Schema(
         ref: "medias", // 🔹 Reference to Media Model
       },
     ],
-    serial_numbers: [
-      {
-        type: Types.ObjectId,
-        ref: "serial_numbers", // 🔹 Reference to Serial Numbers Model
-        sparse: true, // Allows null/undefined values,
-        default: null,
-      },
-    ],
     status: {
       type: String,
       required: true,
@@ -108,6 +106,12 @@ const ProductSchema = new Schema(
       type: Types.ObjectId,
       ref: "shipping_profiles",
       default: null,
+    },
+    shipping: {
+      weight: { type: String, default: null },
+      length: { type: String, default: null },
+      width: { type: String, default: null },
+      height: { type: String, default: null },
     },
     created_at: {
       type: Date,

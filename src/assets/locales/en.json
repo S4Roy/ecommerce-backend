@@ -62,5 +62,8 @@
 	"Address Deleted successfully": "Address Deleted successfully",
 	"Brand added successfully": "Brand added successfully",
 	"Product wishlisted successfully": "Product wishlisted successfully",
-	"Product added to wishlist": "Product added to wishlist"
+	"Product added to wishlist": "Product added to wishlist",
+	"Brand updated successfully": "Brand updated successfully",
+	"Product imported successfully": "Product imported successfully",
+	"Products imported successfully": "Products imported successfully"
 }

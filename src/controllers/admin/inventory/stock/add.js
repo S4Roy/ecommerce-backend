@@ -11,8 +11,15 @@ import { generalHelper } from "../../../../helpers/index.js";
  */
 export const add = async (req, res, next) => {
   try {
-    const { product, type, quantity, mrp, cost_price, selling_price, note } =
-      req.body;
+    const {
+      product,
+      type,
+      quantity,
+      regular_price,
+      cost_price,
+      sale_price,
+      note,
+    } = req.body;
 
     // ✅ Validate product
     const existingProduct = await Product.findById(product);
@@ -45,9 +52,9 @@ export const add = async (req, res, next) => {
       product,
       type,
       quantity,
-      mrp: mrp || null,
+      regular_price: regular_price || null,
       cost_price: cost_price || null,
-      selling_price: selling_price || null,
+      sale_price: sale_price || null,
       note: note || null,
       created_by: req.auth.user_id,
     });
@@ -58,10 +65,12 @@ export const add = async (req, res, next) => {
       type === "in"
         ? {
             $inc: { current_stock: quantity },
-            ...(mrp !== undefined && mrp !== null && { mrp }),
-            ...(mrp !== undefined && cost_price !== null && { cost_price }),
-            ...(selling_price !== undefined &&
-              selling_price !== null && { selling_price }),
+            ...(regular_price !== undefined &&
+              regular_price !== null && { regular_price }),
+            ...(regular_price !== undefined &&
+              cost_price !== null && { cost_price }),
+            ...(sale_price !== undefined &&
+              sale_price !== null && { sale_price }),
           }
         : {
             $inc: { current_stock: -quantity },

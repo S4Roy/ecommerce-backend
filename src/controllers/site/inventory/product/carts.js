@@ -124,10 +124,10 @@ export const carts = async (req, res, next) => {
       },
       {
         $addFields: {
-          price: { $ifNull: ["$product.selling_price", 0] },
+          price: { $ifNull: ["$product.sale_price", 0] },
           total_price: {
             $multiply: [
-              { $ifNull: ["$product.selling_price", 0] },
+              { $ifNull: ["$product.sale_price", 0] },
               { $ifNull: ["$quantity", 0] },
             ],
           },

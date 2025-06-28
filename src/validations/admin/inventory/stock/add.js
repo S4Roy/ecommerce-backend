@@ -19,11 +19,16 @@ export const add = celebrate({
       "any.required": "Quantity is required",
     }),
 
-    mrp: Joi.number().min(0).max(1000000).optional().allow(null).messages({
-      "number.base": "MRP must be a number",
-      "number.min": "MRP cannot be negative",
-      "number.max": "MRP cannot exceed 1,000,000",
-    }),
+    regular_price: Joi.number()
+      .min(0)
+      .max(1000000)
+      .optional()
+      .allow(null)
+      .messages({
+        "number.base": "MRP must be a number",
+        "number.min": "MRP cannot be negative",
+        "number.max": "MRP cannot exceed 1,000,000",
+      }),
     cost_price: Joi.number()
       .min(0)
       .max(1000000)
@@ -35,7 +40,7 @@ export const add = celebrate({
         "number.max": "Cost price cannot exceed 1,000,000",
       }),
 
-    selling_price: Joi.number()
+    sale_price: Joi.number()
       .min(0)
       .max(1000000)
       .optional()

@@ -30,7 +30,7 @@ export const add = celebrate({
         "number.max": "Cost price cannot exceed 1,000,000",
       }),
 
-    selling_price: Joi.number()
+    sale_price: Joi.number()
       .min(0)
       .max(1000000)
       .optional()

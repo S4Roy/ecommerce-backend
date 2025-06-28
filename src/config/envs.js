@@ -5,7 +5,7 @@ export const envs = {
   FRONTEND_URL: process.env.FRONTEND_URL || "",
   basePath: process.env.SERVER_BASEPATH || "",
   env: process.env.NODE_ENV || "dev",
-  port: Number(process.env.NODE_PORT) || 4000,
+  port: Number(process.env.SERVER_PORT) || 4000,
   db: {
     host: process.env.MYSQL_HOSTNAME || "localhost",
     port: process.env.MYSQL_PORT || 3306,

@@ -9,9 +9,9 @@ class StockTransactionResource extends Resource {
       product: this.product?._id || this.product || null,
       type: this.type || null, // 'in' or 'out'
       quantity: this.quantity || 0,
-      mrp: this.mrp || 0,
+      regular_price: this.regular_price || 0,
       cost_price: this.cost_price || 0,
-      selling_price: this.selling_price || 0,
+      sale_price: this.sale_price || 0,
       note: this.note || null,
       created_by: this.created_by?._id || this.created_by || null,
       created_at: this.created_at || null,

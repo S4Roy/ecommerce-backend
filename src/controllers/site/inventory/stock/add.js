@@ -11,8 +11,7 @@ import { generalHelper } from "../../../../helpers/index.js";
  */
 export const add = async (req, res, next) => {
   try {
-    const { product, type, quantity, cost_price, selling_price, note } =
-      req.body;
+    const { product, type, quantity, cost_price, sale_price, note } = req.body;
 
     // ✅ Validate product
     const existingProduct = await Product.findById(product);
@@ -46,7 +45,7 @@ export const add = async (req, res, next) => {
       type,
       quantity,
       cost_price: cost_price || null,
-      selling_price: selling_price || null,
+      sale_price: sale_price || null,
       note: note || null,
       created_by: req.auth.user_id,
     });
@@ -59,8 +58,8 @@ export const add = async (req, res, next) => {
             $inc: { current_stock: quantity },
             ...(cost_price !== undefined &&
               cost_price !== null && { cost_price }),
-            ...(selling_price !== undefined &&
-              selling_price !== null && { selling_price }),
+            ...(sale_price !== undefined &&
+              sale_price !== null && { sale_price }),
           }
         : {
             $inc: { current_stock: -quantity },

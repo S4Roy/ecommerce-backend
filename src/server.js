@@ -126,7 +126,9 @@ app.use(
   swaggerUi.setup(null, swaggerOptions)
 );
 
-console.log("Swagger Docs available at http://localhost:3000/api-docs");
+console.log(
+  `"Swagger Docs available at http://localhost:${envs.port}/api-docs"`
+);
 
 // Handle 404 Errors
 app.all(`${envs.basePath}/*`, (req, res) =>
@@ -135,9 +137,8 @@ app.all(`${envs.basePath}/*`, (req, res) =>
 app.use(errors());
 app.use(handleError);
 // Start the Server
-const PORT = process.env.SERVER_PORT || 3000;
 const HOSTNAME = process.env.SERVER_HOSTNAME || "localhost";
 
-app.listen(PORT, HOSTNAME, () => {
-  console.log(`Server running at http://${HOSTNAME}:${PORT}/`);
+app.listen(envs.port, HOSTNAME, () => {
+  console.log(`Server running at http://${HOSTNAME}:${envs.port}/`);
 });

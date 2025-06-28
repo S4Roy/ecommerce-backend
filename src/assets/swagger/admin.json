@@ -1207,6 +1207,69 @@
         },
         "security": [{ "ApiKeyAuth": [], "bearerAuth": [] }]
       }
+    },
+    "/inventory/product/import": {
+      "post": {
+        "tags": ["Product"],
+        "summary": "import product",
+        "description": "Creates a new product in the system",
+        "requestBody": {
+          "$ref": "./resources/admin/inventory/product/import.json"
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/successResponseObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized Access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/serverErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "ApiKeyAuth": [], "bearerAuth": [] }]
+      }
     }
   },
   "components": {

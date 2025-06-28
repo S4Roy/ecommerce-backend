@@ -4,6 +4,7 @@
 // import { getRandomNumbers } from "./getRandomNumbers.js";
 // import { chartArrayFormat } from "./chartArrayFormat.js";
 // import { genderList } from "./genderList.js";
+import { importFileParse } from "./importFileParse.js";
 import { generateSlugName } from "./generateSlugName.js";
 // import { downloadFileFromUrl } from "./downloadFileFromUrl.js";
 // import { formatNumber } from "./formatNumber.js";
@@ -21,6 +22,7 @@ import { bcryptMake } from "./bcryptMake.js";
 import { bcryptCheck } from "./bcryptCheck.js";
 
 export {
+  importFileParse,
   bcryptCheck,
   bcryptMake,
   // uuidv4,

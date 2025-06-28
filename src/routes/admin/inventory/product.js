@@ -34,4 +34,9 @@ productRouter.delete(
   inventoryController.productController.remove
 );
 
+productRouter.post(
+  "/import",
+  inventoryController.productController.importItems
+);
+
 export { productRouter };

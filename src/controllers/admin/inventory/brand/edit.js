@@ -74,8 +74,6 @@ export const edit = async (req, res, next) => {
       updated_by: req.auth.user_id,
       updated_at: new Date(),
     };
-    console.log(updateData);
-
     // Handle image upload if a new image is provided
     if (image) {
       const key = `brands/${slug}${path.extname(image.name)}`;
@@ -111,6 +109,7 @@ export const edit = async (req, res, next) => {
       data: new CategoryResource(updateBrand).exec(),
     });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };
