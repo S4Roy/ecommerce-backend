@@ -34,11 +34,15 @@ export const importItems = async (req, res, next) => {
       const ID = row["ID"]?.trim();
       if (!ID) continue;
       const name = row["Name"];
-
+      const existingProductName = await Product.findOne({ name: name });
+      if (existingProductName) {
+        console.log(`Skipping duplicate product by name: ${name}`);
+        continue;
+      }
       // 🚫 Skip if Product already exists by ID
-      const existingProduct = await Product.findOne({ id: ID, name: name });
+      const existingProduct = await Product.findOne({ id: ID });
       if (existingProduct) {
-        console.log(`Skipping existing product ID: ${ID} ${name}`);
+        console.log(`Skipping existing product ID: ${ID}`);
         continue;
       }
 
