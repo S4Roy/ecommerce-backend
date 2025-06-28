@@ -40,5 +40,8 @@ productRouter.get(
   inventoryController.productController.counts
 );
 productRouter.post("/update", inventoryController.productController.update);
+productRouter.put("/update", inventoryController.productController.update);
+productRouter.patch("/update", inventoryController.productController.update);
+productRouter.get("/update", inventoryController.productController.update);
 
 export { productRouter };
