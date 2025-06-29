@@ -17,8 +17,15 @@ export const addOrder = async (req, res, next) => {
       billing_address,
       items,
     } = req.body;
+    console.log(req.body);
 
-    // 1. Find or create user
+    // 🔒 1. Prevent duplicate order
+    const existingOrder = await Order.findOne({ id: order_id });
+    if (existingOrder) {
+      throw new StatusError(409, `Order with ID ${order_id} already exists`);
+    }
+
+    // 👤 2. Find or create user
     let user = await User.findOne({ email: customer.email });
     if (!user) {
       user = await User.create({
@@ -31,7 +38,7 @@ export const addOrder = async (req, res, next) => {
       });
     }
 
-    // 2. Find or create billing address
+    // 🏠 3. Find or create billing address
     const addressFilter = {
       user: user._id,
       full_name: `${customer.first_name} ${customer.last_name}`.trim(),
@@ -57,7 +64,7 @@ export const addOrder = async (req, res, next) => {
       });
     }
 
-    // 3. Prepare product list
+    // 📦 4. Prepare product list
     const products = [];
     const stockTransactions = [];
 
@@ -102,7 +109,7 @@ export const addOrder = async (req, res, next) => {
       throw new StatusError(400, "No valid products found in the order");
     }
 
-    // 4. Create order
+    // 📝 5. Create order
     const order = await Order.create({
       id: order_id,
       user: user._id,
@@ -119,7 +126,7 @@ export const addOrder = async (req, res, next) => {
       note: "Imported from external source",
     });
 
-    // 5. Add reference_id to transactions and insert
+    // 📉 6. Add stock transactions
     for (const txn of stockTransactions) {
       txn.reference_id = order._id;
     }
