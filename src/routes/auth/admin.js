@@ -16,6 +16,12 @@ adminAuthRouter.post(
   authController.adminLogin
 );
 adminAuthRouter.post(
+  "/generate-token",
+  authValidation.loginValidation.adminLogin,
+  authController.adminGenerateToken
+);
+
+adminAuthRouter.post(
   "/request-password-reset",
   authValidation.loginValidation.requestPasswordReset,
   authController.requestPasswordReset

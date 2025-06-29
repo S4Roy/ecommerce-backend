@@ -97,6 +97,7 @@ app.use(
 app.use(
   `${envs.basePath}/api/v1/webhook`,
   middleware.accessTokenIfAny,
+  middleware.validateApiKey,
   v1WebhookRouter
 );
 
