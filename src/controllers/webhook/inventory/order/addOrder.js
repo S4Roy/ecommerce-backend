@@ -21,17 +21,20 @@ export const addOrder = async (req, res, next) => {
       payment_method,
       items,
     } = req.body;
-    console.log(req.body);
+
+    console.log(`🚀 Received order: ${order_id}`);
 
     // 🔒 1. Prevent duplicate order
     const existingOrder = await Order.findOne({ id: order_id });
     if (existingOrder) {
+      console.warn(`⚠️ Duplicate order attempt: ${order_id}`);
       throw new StatusError(409, `Order with ID ${order_id} already exists`);
     }
 
     // 👤 2. Find or create user
     let user = await User.findOne({ email: customer.email });
     if (!user) {
+      console.log(`👤 Creating new user for ${customer.email}`);
       user = await User.create({
         role: "customer",
         name: `${customer.first_name} ${customer.last_name}`.trim(),
@@ -42,7 +45,7 @@ export const addOrder = async (req, res, next) => {
       });
     }
 
-    // 🏠 3. Find or create billingAddress address
+    // 🏠 3. Find or create billing address
     const billingFilter = {
       user: user._id,
       full_name: `${customer.first_name} ${customer.last_name}`.trim(),
@@ -57,6 +60,7 @@ export const addOrder = async (req, res, next) => {
 
     let billingAddress = await Address.findOne(billingFilter);
     if (!billingAddress) {
+      console.log(`📦 Creating billing address for user ${user.email}`);
       billingAddress = await Address.create({
         ...billingFilter,
         address_line2: billing_address.address_2 || "",
@@ -83,6 +87,7 @@ export const addOrder = async (req, res, next) => {
 
     let shippingAddress = await Address.findOne(shippingFilter);
     if (!shippingAddress) {
+      console.log(`📦 Creating shipping address for user ${user.email}`);
       shippingAddress = await Address.create({
         ...shippingFilter,
         address_line2: shipping_address.address_2 || "",
@@ -106,8 +111,10 @@ export const addOrder = async (req, res, next) => {
       }
 
       const quantity = item.quantity;
-      const unit_price = parseFloat(item.price);
-      const total_price = unit_price * quantity;
+      const unit_price = parseFloat(item.unit_price ?? item.price ?? 0);
+      const total_price = parseFloat(item.subtotal ?? unit_price * quantity);
+      const regular_price = parseFloat(item.regular_price ?? 0);
+      const sale_price = parseFloat(item.sale_price ?? 0);
 
       if (productDoc.current_stock < quantity) {
         throw new StatusError(400, `Insufficient stock for ${productDoc.name}`);
@@ -117,11 +124,15 @@ export const addOrder = async (req, res, next) => {
       productDoc.current_stock -= quantity;
       await productDoc.save();
 
+      console.log(`🛒 Adding product: ${productDoc.name} x${quantity}`);
+
       products.push({
         product: productDoc._id,
         quantity,
         unit_price,
         total_price,
+        regular_price,
+        sale_price,
         packed: [],
       });
 
@@ -148,7 +159,7 @@ export const addOrder = async (req, res, next) => {
       products,
       payment_status: "pending",
       order_status: status,
-      total_amount: total,
+      total_amount: parseFloat(total),
       discount: parseFloat(discount ?? 0),
       shipping: parseFloat(shipping ?? 0),
       grand_total: parseFloat(total),
@@ -157,12 +168,15 @@ export const addOrder = async (req, res, next) => {
       note: "Imported from external source",
     });
 
+    console.log(`✅ Order created: ${order.id}`);
+
     // 📉 7. Add stock transactions
     for (const txn of stockTransactions) {
       txn.reference_id = order._id;
     }
 
     await StockTransaction.insertMany(stockTransactions);
+    console.log(`📊 Stock transactions logged: ${stockTransactions.length}`);
 
     return res.status(200).json({
       status: "success",
@@ -170,6 +184,7 @@ export const addOrder = async (req, res, next) => {
       data: { order_id: order.id },
     });
   } catch (error) {
+    console.error("❌ Order sync failed:", error.message);
     next(error);
   }
 };
