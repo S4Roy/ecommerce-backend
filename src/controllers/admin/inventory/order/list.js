@@ -10,7 +10,7 @@ export const list = async (req, res, next) => {
       page = 1,
       limit = envs.pagination.limit,
       search_key = "",
-      sort_by = "created_at",
+      sort_by = "id",
       sort_order = -1,
       _id = null,
     } = req.query;
@@ -37,6 +37,7 @@ export const list = async (req, res, next) => {
       matchFilter.$or = [
         { id: { $regex: search_key, $options: "i" } },
         { transaction_id: { $regex: search_key, $options: "i" } },
+        { order_status: { $regex: search_key, $options: "i" } },
       ];
     }
 
