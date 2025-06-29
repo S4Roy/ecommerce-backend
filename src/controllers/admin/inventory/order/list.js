@@ -12,9 +12,10 @@ export const list = async (req, res, next) => {
       search_key = "",
       sort_by = "created_at",
       sort_order = -1,
+      _id = null,
     } = req.query;
 
-    const { slug = null, id = null } = req.params;
+    const { slug = null } = req.params;
 
     const options = {
       page: parseInt(page),
@@ -28,8 +29,8 @@ export const list = async (req, res, next) => {
       matchFilter.slug = slug;
     }
 
-    if (id) {
-      matchFilter._id = new mongoose.Types.ObjectId(id);
+    if (_id) {
+      matchFilter._id = new mongoose.Types.ObjectId(_id);
     }
 
     if (search_key) {
@@ -103,7 +104,7 @@ export const list = async (req, res, next) => {
     ];
 
     let data;
-    if (slug || id) {
+    if (slug || _id) {
       // Single order detail
       const result = await Order.aggregate(pipeline);
       if (!result.length) {
@@ -121,7 +122,7 @@ export const list = async (req, res, next) => {
     res.status(200).json({
       status: "success",
       message: req.__(
-        `${slug || id ? "Details" : "List"} fetched successfully`
+        `${slug || _id ? "Details" : "List"} fetched successfully`
       ),
       data,
     });

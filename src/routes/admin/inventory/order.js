@@ -6,7 +6,7 @@ const orderRouter = Router();
 
 orderRouter.get(
   "/list",
-  inventoryValidation.productValidation.list,
+  inventoryValidation.orderValidation.list,
   inventoryController.orderController.list
 );
 
