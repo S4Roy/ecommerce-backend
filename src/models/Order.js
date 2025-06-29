@@ -67,12 +67,13 @@ const OrderSchema = new Schema(
 
     total_amount: { type: Number, required: true },
     discount: { type: Number, default: 0 },
+    shipping: { type: Number, default: 0 },
     grand_total: { type: Number, required: true },
 
     payment_method: {
       type: String,
-      enum: ["cod", "online"],
-      required: true,
+      // enum: ["cod", "online"],
+      required: false,
     },
     transaction_id: { type: String },
     note: { type: String },

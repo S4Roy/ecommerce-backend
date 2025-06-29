@@ -13,8 +13,12 @@ export const addOrder = async (req, res, next) => {
       status,
       total,
       currency,
+      discount,
+      shipping,
       customer,
       billing_address,
+      shipping_address,
+      payment_method,
       items,
     } = req.body;
     console.log(req.body);
@@ -38,8 +42,8 @@ export const addOrder = async (req, res, next) => {
       });
     }
 
-    // 🏠 3. Find or create billing address
-    const addressFilter = {
+    // 🏠 3. Find or create billingAddress address
+    const billingFilter = {
       user: user._id,
       full_name: `${customer.first_name} ${customer.last_name}`.trim(),
       phone: customer.phone || null,
@@ -51,20 +55,46 @@ export const addOrder = async (req, res, next) => {
       pincode: billing_address.postcode,
     };
 
-    let billing = await Address.findOne(addressFilter);
-    if (!billing) {
-      billing = await Address.create({
-        ...addressFilter,
-        address_line2: "",
+    let billingAddress = await Address.findOne(billingFilter);
+    if (!billingAddress) {
+      billingAddress = await Address.create({
+        ...billingFilter,
+        address_line2: billing_address.address_2 || "",
         landmark: "",
         address_type: "home",
-        purpose: "both",
+        purpose: "billing",
         is_default: true,
         created_by: user._id,
       });
     }
 
-    // 📦 4. Prepare product list
+    // 📬 4. Find or create shipping address
+    const shippingFilter = {
+      user: user._id,
+      full_name: `${customer.first_name} ${customer.last_name}`.trim(),
+      phone: customer.phone || null,
+      email: customer.email,
+      address_line1: shipping_address.address_1,
+      city: shipping_address.city,
+      state: shipping_address.state,
+      country: shipping_address.country,
+      pincode: shipping_address.postcode,
+    };
+
+    let shippingAddress = await Address.findOne(shippingFilter);
+    if (!shippingAddress) {
+      shippingAddress = await Address.create({
+        ...shippingFilter,
+        address_line2: shipping_address.address_2 || "",
+        landmark: "",
+        address_type: "home",
+        purpose: "shipping",
+        is_default: false,
+        created_by: user._id,
+      });
+    }
+
+    // 📦 5. Prepare product list
     const products = [];
     const stockTransactions = [];
 
@@ -109,24 +139,25 @@ export const addOrder = async (req, res, next) => {
       throw new StatusError(400, "No valid products found in the order");
     }
 
-    // 📝 5. Create order
+    // 📝 6. Create order
     const order = await Order.create({
       id: order_id,
       user: user._id,
-      shipping_address: billing._id,
-      billing_address: billing._id,
+      billing_address: billingAddress._id,
+      shipping_address: shippingAddress._id,
       products,
       payment_status: "pending",
       order_status: status,
       total_amount: total,
-      discount: 0,
+      discount: parseFloat(discount ?? 0),
+      shipping: parseFloat(shipping ?? 0),
       grand_total: parseFloat(total),
-      payment_method: "cod",
+      payment_method: payment_method,
       transaction_id: `EXT-${order_id}`,
       note: "Imported from external source",
     });
 
-    // 📉 6. Add stock transactions
+    // 📉 7. Add stock transactions
     for (const txn of stockTransactions) {
       txn.reference_id = order._id;
     }
