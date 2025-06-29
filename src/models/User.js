@@ -17,6 +17,7 @@ const UserSchema = new Schema(
         "vendor",
         "operator",
         "user",
+        "customer",
       ],
     },
     name: {
@@ -31,7 +32,8 @@ const UserSchema = new Schema(
     mobile: {
       type: String,
       required: false,
-      unique: true,
+      default: null,
+      trim: true,
     },
     address: {
       type: String,

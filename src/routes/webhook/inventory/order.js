@@ -4,8 +4,11 @@ import { inventoryValidation } from "../../../validations/site/index.js";
 
 const orderRouter = Router();
 
-orderRouter.post("/update", inventoryController.orderController.update);
-orderRouter.put("/update", inventoryController.orderController.update);
+orderRouter.post("/add", inventoryController.orderController.addOrder);
+orderRouter.put(
+  "/status-update",
+  inventoryController.orderController.updateStatus
+);
 orderRouter.patch("/update", inventoryController.orderController.update);
 orderRouter.get("/update", inventoryController.orderController.update);
 

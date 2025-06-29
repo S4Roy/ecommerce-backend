@@ -6,17 +6,17 @@ const AddressSchema = new Schema(
   {
     user: { type: mongoose.Types.ObjectId, ref: "users", required: true },
     full_name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: false },
     email: { type: String },
 
     address_line1: { type: String, required: true },
     address_line2: { type: String },
     landmark: { type: String },
 
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true, default: "India" },
-    pincode: { type: String, required: true },
+    city: { type: String, required: false },
+    state: { type: String, required: false },
+    country: { type: String, required: false, default: "India" },
+    pincode: { type: String, required: false },
 
     address_type: {
       type: String,
