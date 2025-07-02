@@ -6,10 +6,18 @@ export const list = celebrate({
     limit: Joi.number().optional(),
     _id: Joi.string().optional().allow("", null),
     search_key: Joi.string().optional().allow("", null),
+    order_status: Joi.string().optional().allow("", null),
     sort_by: Joi.string()
       .optional()
       .allow("", null)
-      .valid("name", "created_at"),
+      .valid(
+        "order_status",
+        "grand_total",
+        "created_at",
+        "id",
+        "user.name",
+        "items"
+      ),
     sort_order: Joi.number().optional().allow(null).valid(-1, 1),
   }),
 });

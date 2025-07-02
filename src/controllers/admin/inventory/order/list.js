@@ -1,6 +1,5 @@
 import Order from "../../../../models/Order.js";
-import { StatusError } from "../../../../config/index.js";
-import { envs } from "../../../../config/index.js";
+import { StatusError, envs } from "../../../../config/index.js";
 import OrderResource from "../../../../resources/OrderResource.js";
 import mongoose from "mongoose";
 
@@ -9,6 +8,7 @@ export const list = async (req, res, next) => {
     const {
       page = 1,
       limit = envs.pagination.limit,
+      order_status = "",
       search_key = "",
       sort_by = "id",
       sort_order = -1,
@@ -20,7 +20,7 @@ export const list = async (req, res, next) => {
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
-      sort: { [sort_by]: sort_order },
+      sort: {},
     };
 
     const matchFilter = { deleted_at: null };
@@ -39,6 +39,10 @@ export const list = async (req, res, next) => {
         { transaction_id: { $regex: search_key, $options: "i" } },
         { order_status: { $regex: search_key, $options: "i" } },
       ];
+    }
+
+    if (order_status) {
+      matchFilter.order_status = order_status;
     }
 
     const pipeline = [
@@ -94,6 +98,7 @@ export const list = async (req, res, next) => {
         },
       },
 
+      // Lookup media
       {
         $lookup: {
           from: "medias",
@@ -104,16 +109,24 @@ export const list = async (req, res, next) => {
       },
     ];
 
+    // Handle nested sort (e.g., user.name)
+    if (sort_by === "items") {
+      // pipeline.push({
+      //   $sort: { "user.name": parseInt(sort_order) },
+      // });
+      options.sort["products"] = parseInt(sort_order);
+    } else {
+      options.sort[sort_by] = parseInt(sort_order);
+    }
+
     let data;
     if (slug || _id) {
-      // Single order detail
       const result = await Order.aggregate(pipeline);
       if (!result.length) {
         throw StatusError.notFound(req.__("Order not found"));
       }
       data = new OrderResource(result[0]).exec();
     } else {
-      // Paginated list
       const agg = Order.aggregate(pipeline);
       const result = await Order.aggregatePaginate(agg, options);
       result.docs = await OrderResource.collection(result.docs);
