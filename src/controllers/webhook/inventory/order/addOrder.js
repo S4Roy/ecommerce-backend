@@ -103,7 +103,11 @@ export const addOrder = async (req, res, next) => {
         });
       }
     }
+    const totalAmount = parseFloat(total ?? 0);
+    const discountAmount = parseFloat(discount ?? 0);
+    const shippingAmount = parseFloat(shipping ?? 0);
 
+    const sub_total = totalAmount - discountAmount - shippingAmount;
     // ✅ 5. Create Order first (without products)
     const order = await Order.create({
       id: order_id,
@@ -112,10 +116,10 @@ export const addOrder = async (req, res, next) => {
       shipping_address: shippingAddress?._id ?? null,
       payment_status: "pending",
       order_status: status,
-      total_amount: parseFloat(total),
-      discount: parseFloat(discount ?? 0),
-      shipping: parseFloat(shipping ?? 0),
-      grand_total: parseFloat(total),
+      total_amount: sub_total,
+      discount: discountAmount,
+      shipping: shippingAmount,
+      grand_total: totalAmount,
       payment_method,
       transaction_id: `EXT-${order_id}`,
       note: "Imported from external source",
