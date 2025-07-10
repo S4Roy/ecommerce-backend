@@ -141,13 +141,13 @@ export const addOrder = async (req, res, next) => {
       const regular_price = parseFloat(item.regular_price ?? 0);
       const sale_price = parseFloat(item.sale_price ?? 0);
 
-      if (productDoc.current_stock < quantity) {
-        throw new StatusError(400, `Insufficient stock for ${productDoc.name}`);
-      }
+      // if (productDoc.current_stock < quantity) {
+      //   throw new StatusError(400, `Insufficient stock for ${productDoc.name}`);
+      // }
 
       // Reduce stock
-      productDoc.current_stock -= quantity;
-      await productDoc.save();
+      // productDoc.current_stock -= quantity;
+      // await productDoc.save();
 
       console.log(`🛒 Adding product: ${productDoc.name} x${quantity}`);
 
@@ -163,15 +163,15 @@ export const addOrder = async (req, res, next) => {
       });
 
       // 📊 Prepare stock transaction
-      stockTransactions.push({
-        product_id: productDoc._id,
-        type: "sale",
-        quantity,
-        reference_type: "order",
-        reference_id: order._id,
-        sale_price: unit_price,
-        created_by: user._id,
-      });
+      // stockTransactions.push({
+      //   product_id: productDoc._id,
+      //   type: "sale",
+      //   quantity,
+      //   reference_type: "order",
+      //   reference_id: order._id,
+      //   sale_price: unit_price,
+      //   created_by: user._id,
+      // });
     }
 
     if (!orderItems.length) {
@@ -182,7 +182,7 @@ export const addOrder = async (req, res, next) => {
     await OrderItem.insertMany(orderItems);
 
     // ✅ Save stock transactions
-    await StockTransaction.insertMany(stockTransactions);
+    // await StockTransaction.insertMany(stockTransactions);
 
     console.log(`✅ Order created: ${order.id}`);
     console.log(`📦 Order items added: ${orderItems.length}`);
