@@ -11,6 +11,7 @@ export const addOrder = async (req, res, next) => {
   try {
     const {
       order_id,
+      created_at,
       status,
       total,
       currency,
@@ -110,6 +111,7 @@ export const addOrder = async (req, res, next) => {
     const sub_total = totalAmount - discountAmount - shippingAmount;
     // ✅ 5. Create Order first (without products)
     const order = await Order.create({
+      created_at: created_at ? new Date(created_at) : new Date(),
       id: order_id,
       user: user._id,
       billing_address: billingAddress?._id ?? null,
