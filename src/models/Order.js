@@ -2,29 +2,6 @@ import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-// Sub-schema for item packing info
-const PackingSchema = new Schema(
-  {
-    packed_at: { type: Date, default: null },
-    packed_by: { type: Schema.Types.ObjectId, ref: "users" },
-    serial: { type: String },
-    label_printed: { type: Boolean, default: false },
-  },
-  { _id: false }
-);
-
-// Product item in the order
-const OrderItemSchema = new Schema(
-  {
-    product: { type: Schema.Types.ObjectId, ref: "products", required: true },
-    quantity: { type: Number, required: true },
-    unit_price: { type: Number, required: true },
-    total_price: { type: Number, required: true },
-    packed: { type: [PackingSchema], default: [] },
-  },
-  { _id: false }
-);
-
 // Main order schema
 const OrderSchema = new Schema(
   {
@@ -36,15 +13,15 @@ const OrderSchema = new Schema(
     shipping_address: {
       type: Schema.Types.ObjectId,
       ref: "address",
-      required: true,
+      required: false,
+      default: null,
     },
     billing_address: {
       type: Schema.Types.ObjectId,
       ref: "address",
-      required: true,
+      required: false,
+      default: null,
     },
-
-    products: { type: [OrderItemSchema], required: true },
 
     payment_status: {
       type: String,

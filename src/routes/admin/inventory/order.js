@@ -9,5 +9,15 @@ orderRouter.get(
   inventoryValidation.orderValidation.list,
   inventoryController.orderController.list
 );
+orderRouter.get(
+  "/details",
+  // inventoryValidation.orderValidation.list,
+  inventoryController.orderController.order_details
+);
+orderRouter.get(
+  "/picked-item-by-sku",
+  inventoryValidation.orderValidation.picked_item_by_sku,
+  inventoryController.orderController.picked_item_by_sku
+);
 
 export { orderRouter };

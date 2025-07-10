@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Order from "../../../../models/Order.js";
+import OrderItem from "../../../../models/OrderItem.js";
 import User from "../../../../models/User.js";
 import Address from "../../../../models/Address.js";
 import Product from "../../../../models/Product.js";
@@ -45,62 +46,82 @@ export const addOrder = async (req, res, next) => {
       });
     }
 
-    // 🏠 3. Find or create billing address
-    const billingFilter = {
-      user: user._id,
-      full_name: `${customer.first_name} ${customer.last_name}`.trim(),
-      phone: customer.phone || null,
-      email: customer.email,
-      address_line1: billing_address.address_1,
-      city: billing_address.city,
-      state: billing_address.state,
-      country: billing_address.country,
-      pincode: billing_address.postcode,
-    };
+    // 🏠 3. Billing address
+    let billingAddress = null;
+    if (billing_address?.address_1) {
+      const billingFilter = {
+        user: user._id,
+        full_name: `${customer.first_name} ${customer.last_name}`.trim(),
+        phone: customer.phone || null,
+        email: customer.email,
+        address_line1: billing_address.address_1,
+        city: billing_address.city || "",
+        state: billing_address.state || "",
+        country: billing_address.country || "",
+        pincode: billing_address.postcode || "",
+      };
 
-    let billingAddress = await Address.findOne(billingFilter);
-    if (!billingAddress) {
-      console.log(`📦 Creating billing address for user ${user.email}`);
-      billingAddress = await Address.create({
-        ...billingFilter,
-        address_line2: billing_address.address_2 || "",
-        landmark: "",
-        address_type: "home",
-        purpose: "billing",
-        is_default: true,
-        created_by: user._id,
-      });
+      billingAddress = await Address.findOne(billingFilter);
+      if (!billingAddress) {
+        billingAddress = await Address.create({
+          ...billingFilter,
+          address_line2: billing_address.address_2 || "",
+          landmark: "",
+          address_type: "home",
+          purpose: "billing",
+          is_default: true,
+          created_by: user._id,
+        });
+      }
     }
 
-    // 📬 4. Find or create shipping address
-    const shippingFilter = {
-      user: user._id,
-      full_name: `${customer.first_name} ${customer.last_name}`.trim(),
-      phone: customer.phone || null,
-      email: customer.email,
-      address_line1: shipping_address.address_1,
-      city: shipping_address.city,
-      state: shipping_address.state,
-      country: shipping_address.country,
-      pincode: shipping_address.postcode,
-    };
+    // 📬 4. Shipping address
+    let shippingAddress = null;
+    if (shipping_address?.address_1) {
+      const shippingFilter = {
+        user: user._id,
+        full_name: `${customer.first_name} ${customer.last_name}`.trim(),
+        phone: customer.phone || null,
+        email: customer.email,
+        address_line1: shipping_address.address_1,
+        city: shipping_address.city || "",
+        state: shipping_address.state || "",
+        country: shipping_address.country || "",
+        pincode: shipping_address.postcode || "",
+      };
 
-    let shippingAddress = await Address.findOne(shippingFilter);
-    if (!shippingAddress) {
-      console.log(`📦 Creating shipping address for user ${user.email}`);
-      shippingAddress = await Address.create({
-        ...shippingFilter,
-        address_line2: shipping_address.address_2 || "",
-        landmark: "",
-        address_type: "home",
-        purpose: "shipping",
-        is_default: false,
-        created_by: user._id,
-      });
+      shippingAddress = await Address.findOne(shippingFilter);
+      if (!shippingAddress) {
+        shippingAddress = await Address.create({
+          ...shippingFilter,
+          address_line2: shipping_address.address_2 || "",
+          landmark: "",
+          address_type: "home",
+          purpose: "shipping",
+          is_default: false,
+          created_by: user._id,
+        });
+      }
     }
 
-    // 📦 5. Prepare product list
-    const products = [];
+    // ✅ 5. Create Order first (without products)
+    const order = await Order.create({
+      id: order_id,
+      user: user._id,
+      billing_address: billingAddress?._id ?? null,
+      shipping_address: shippingAddress?._id ?? null,
+      payment_status: "pending",
+      order_status: status,
+      total_amount: parseFloat(total),
+      discount: parseFloat(discount ?? 0),
+      shipping: parseFloat(shipping ?? 0),
+      grand_total: parseFloat(total),
+      payment_method,
+      transaction_id: `EXT-${order_id}`,
+      note: "Imported from external source",
+    });
+
+    const orderItems = [];
     const stockTransactions = [];
 
     for (const item of items) {
@@ -126,56 +147,41 @@ export const addOrder = async (req, res, next) => {
 
       console.log(`🛒 Adding product: ${productDoc.name} x${quantity}`);
 
-      products.push({
-        product: productDoc._id,
+      // ✅ Prepare order item document
+      orderItems.push({
+        order_id: order._id,
+        product_id: productDoc._id,
         quantity,
         unit_price,
         total_price,
         regular_price,
         sale_price,
-        packed: [],
       });
 
+      // 📊 Prepare stock transaction
       stockTransactions.push({
-        product: productDoc._id,
+        product_id: productDoc._id,
         type: "sale",
         quantity,
         reference_type: "order",
+        reference_id: order._id,
         sale_price: unit_price,
         created_by: user._id,
       });
     }
 
-    if (!products.length) {
+    if (!orderItems.length) {
       throw new StatusError(400, "No valid products found in the order");
     }
 
-    // 📝 6. Create order
-    const order = await Order.create({
-      id: order_id,
-      user: user._id,
-      billing_address: billingAddress._id,
-      shipping_address: shippingAddress._id,
-      products,
-      payment_status: "pending",
-      order_status: status,
-      total_amount: parseFloat(total),
-      discount: parseFloat(discount ?? 0),
-      shipping: parseFloat(shipping ?? 0),
-      grand_total: parseFloat(total),
-      payment_method: payment_method,
-      transaction_id: `EXT-${order_id}`,
-      note: "Imported from external source",
-    });
+    // ✅ Save order items
+    await OrderItem.insertMany(orderItems);
+
+    // ✅ Save stock transactions
+    await StockTransaction.insertMany(stockTransactions);
 
     console.log(`✅ Order created: ${order.id}`);
-
-    // 📉 7. Add stock transactions
-    for (const txn of stockTransactions) {
-      txn.reference_id = order._id;
-    }
-
-    await StockTransaction.insertMany(stockTransactions);
+    console.log(`📦 Order items added: ${orderItems.length}`);
     console.log(`📊 Stock transactions logged: ${stockTransactions.length}`);
 
     return res.status(200).json({

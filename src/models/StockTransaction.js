@@ -4,7 +4,7 @@ const { Schema, model, Types } = mongoose;
 
 const StockTransactionSchema = new Schema(
   {
-    product: {
+    product_id: {
       type: Types.ObjectId,
       ref: "products",
       required: true,

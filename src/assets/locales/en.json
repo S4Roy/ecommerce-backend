@@ -65,5 +65,6 @@
 	"Product added to wishlist": "Product added to wishlist",
 	"Brand updated successfully": "Brand updated successfully",
 	"Product imported successfully": "Product imported successfully",
-	"Products imported successfully": "Products imported successfully"
+	"Products imported successfully": "Products imported successfully",
+	"Order not found": "Order not found"
 }

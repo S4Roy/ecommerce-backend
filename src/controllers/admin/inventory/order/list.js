@@ -1,6 +1,5 @@
 import Order from "../../../../models/Order.js";
 import { StatusError, envs } from "../../../../config/index.js";
-import OrderResource from "../../../../resources/OrderResource.js";
 import mongoose from "mongoose";
 
 export const list = async (req, res, next) => {
@@ -20,29 +19,20 @@ export const list = async (req, res, next) => {
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
-      sort: {},
+      sort: { [sort_by]: parseInt(sort_order) },
     };
 
     const matchFilter = { deleted_at: null };
 
-    if (slug) {
-      matchFilter.slug = slug;
-    }
-
-    if (_id) {
-      matchFilter._id = new mongoose.Types.ObjectId(_id);
-    }
-
+    if (slug) matchFilter.slug = slug;
+    if (_id) matchFilter._id = new mongoose.Types.ObjectId(_id);
+    if (order_status) matchFilter.order_status = order_status;
     if (search_key) {
       matchFilter.$or = [
         { id: { $regex: search_key, $options: "i" } },
         { transaction_id: { $regex: search_key, $options: "i" } },
         { order_status: { $regex: search_key, $options: "i" } },
       ];
-    }
-
-    if (order_status) {
-      matchFilter.order_status = order_status;
     }
 
     const pipeline = [
@@ -59,7 +49,7 @@ export const list = async (req, res, next) => {
       },
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
 
-      // Lookup billing address
+      // Billing address
       {
         $lookup: {
           from: "addresses",
@@ -69,10 +59,13 @@ export const list = async (req, res, next) => {
         },
       },
       {
-        $unwind: { path: "$billing_address", preserveNullAndEmptyArrays: true },
+        $unwind: {
+          path: "$billing_address",
+          preserveNullAndEmptyArrays: true,
+        },
       },
 
-      // Lookup shipping address
+      // Shipping address
       {
         $lookup: {
           from: "addresses",
@@ -88,48 +81,80 @@ export const list = async (req, res, next) => {
         },
       },
 
-      // Lookup product details
+      // Lookup order items
       {
         $lookup: {
-          from: "products",
-          localField: "products.product",
-          foreignField: "_id",
-          as: "product_details",
+          from: "order_items",
+          localField: "_id",
+          foreignField: "order_id",
+          as: "order_items",
         },
       },
 
-      // Lookup media
+      // Expand order_items to process product + image lookups
+      { $unwind: { path: "$order_items", preserveNullAndEmptyArrays: true } },
+
+      // Lookup product in order_item
+      {
+        $lookup: {
+          from: "products",
+          localField: "order_items.product_id",
+          foreignField: "_id",
+          as: "product_doc",
+        },
+      },
+      {
+        $unwind: {
+          path: "$product_doc",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // Lookup images for product
       {
         $lookup: {
           from: "medias",
-          localField: "product_details.images",
+          localField: "product_doc.images",
           foreignField: "_id",
           as: "product_images",
         },
       },
-    ];
 
-    // Handle nested sort (e.g., user.name)
-    if (sort_by === "items") {
-      // pipeline.push({
-      //   $sort: { "user.name": parseInt(sort_order) },
-      // });
-      options.sort["products"] = parseInt(sort_order);
-    } else {
-      options.sort[sort_by] = parseInt(sort_order);
-    }
+      // Rebuild order_item
+      {
+        $addFields: {
+          "order_items.product": {
+            $mergeObjects: ["$product_doc", { images: "$product_images" }],
+          },
+        },
+      },
+
+      // Group all order_items back
+      {
+        $group: {
+          _id: "$_id",
+          doc: { $first: "$$ROOT" },
+          order_items: { $push: "$order_items" },
+        },
+      },
+      {
+        $addFields: {
+          "doc.order_items": "$order_items",
+        },
+      },
+      {
+        $replaceRoot: { newRoot: "$doc" },
+      },
+    ];
 
     let data;
     if (slug || _id) {
       const result = await Order.aggregate(pipeline);
-      if (!result.length) {
-        throw StatusError.notFound(req.__("Order not found"));
-      }
-      data = new OrderResource(result[0]).exec();
+      if (!result.length) throw StatusError.notFound(req.__("Order not found"));
+      data = result[0];
     } else {
       const agg = Order.aggregate(pipeline);
       const result = await Order.aggregatePaginate(agg, options);
-      result.docs = await OrderResource.collection(result.docs);
       data = result;
     }
 
