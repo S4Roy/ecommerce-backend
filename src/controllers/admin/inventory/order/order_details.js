@@ -1,122 +1,163 @@
-import Order from "../../../../models/Order.js";
-import { StatusError, envs } from "../../../../config/index.js";
-import OrderPickupDetailsResource from "../../../../resources/OrderPickupDetailsResource.js";
 import mongoose from "mongoose";
+import Order from "../../../../models/Order.js";
+import OrderItem from "../../../../models/OrderItem.js";
+import { StatusError } from "../../../../config/index.js";
+import OrderPickupDetailsResource from "../../../../resources/OrderPickupDetailsResource.js";
 
 export const order_details = async (req, res, next) => {
   try {
     const { _id = null } = req.query;
 
-    const results = await Order.aggregate([
-      {
-        $match: { _id: new mongoose.Types.ObjectId(_id) },
-      },
-      { $unwind: "$products" },
+    if (!_id || !mongoose.Types.ObjectId.isValid(_id)) {
+      throw new StatusError(400, "Invalid order ID");
+    }
+
+    const orderId = new mongoose.Types.ObjectId(_id);
+
+    const order = await Order.findById(orderId)
+      .populate("user")
+      .populate("shipping_address")
+      .populate("billing_address");
+
+    if (!order) {
+      throw new StatusError(404, "Order not found");
+    }
+
+    const [{ items = [], totals = {} } = {}] = await OrderItem.aggregate([
+      { $match: { order_id: order._id } },
+
       {
         $lookup: {
           from: "products",
-          let: { productId: "$products.product" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$productId"] } } },
-            {
-              $lookup: {
-                from: "medias",
-                localField: "images",
-                foreignField: "_id",
-                as: "imagesData",
-              },
-            },
-            {
-              $lookup: {
-                from: "categories",
-                localField: "categories",
-                foreignField: "_id",
-                as: "categoryData",
-              },
-            },
-          ],
+          localField: "product_id",
+          foreignField: "_id",
           as: "productInfo",
         },
       },
-
       { $unwind: "$productInfo" },
-      {
-        $addFields: {
-          ordered_quantity: "$products.quantity",
-          packed_quantity: { $size: { $ifNull: ["$products.packed", []] } },
-          current_stock: "$productInfo.current_stock",
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          order_id: "$_id",
-          product_id: "$products.product",
-          sku: "$productInfo.sku",
-          name: "$productInfo.name",
-          slug: "$productInfo.slug",
-          shipping: "$productInfo.shipping",
-          unit_price: "$products.unit_price",
-          total_price: "$products.total_price",
-          ordered_quantity: 1,
-          packed_quantity: 1,
-          current_stock: 1,
-          images: {
-            $map: {
-              input: "$productInfo.imagesData",
-              as: "img",
-              in: {
-                _id: "$$img._id",
-                url: "$$img.url", // Adjust field names as per your `medias` schema
-                alt: "$$img.alt",
-              },
-            },
-          },
-          categories: {
-            $map: {
-              input: "$productInfo.categoryData",
-              as: "cat",
-              in: {
-                _id: "$$cat._id",
-                name: "$$cat.name", // Adjust field names as per your `medias` schema
-                slug: "$$cat.slug",
-              },
-            },
-          },
-        },
-      },
 
       {
-        $group: {
-          _id: "$order_id",
-          products: { $push: "$$ROOT" },
+        $lookup: {
+          from: "medias",
+          localField: "productInfo.images",
+          foreignField: "_id",
+          as: "imagesData",
         },
       },
       {
         $lookup: {
-          from: "orders",
-          localField: "_id",
+          from: "categories",
+          localField: "productInfo.categories",
           foreignField: "_id",
-          as: "orderData",
+          as: "categoryData",
         },
       },
-      { $unwind: "$orderData" },
+      {
+        $lookup: {
+          from: "packed_items",
+          let: { orderId: "$order_id", productId: "$product_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$order_id", "$$orderId"] },
+                    { $eq: ["$product_id", "$$productId"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "packedData",
+        },
+      },
+
+      {
+        $addFields: {
+          packed_quantity: { $size: "$packedData" },
+          unpacked_quantity: {
+            $subtract: ["$quantity", { $size: "$packedData" }],
+          },
+        },
+      },
+
+      {
+        $facet: {
+          items: [
+            { $sort: { unpacked_quantity: -1 } },
+            {
+              $project: {
+                product_id: 1,
+                order_id: 1,
+                sku: "$productInfo.sku",
+                name: "$productInfo.name",
+                slug: "$productInfo.slug",
+                shipping: "$productInfo.shipping",
+                unit_price: 1,
+                total_price: 1,
+                ordered_quantity: "$quantity",
+                packed_quantity: 1,
+                current_stock: "$productInfo.current_stock",
+                images: {
+                  $map: {
+                    input: "$imagesData",
+                    as: "img",
+                    in: {
+                      _id: "$$img._id",
+                      url: "$$img.url",
+                      alt: "$$img.alt",
+                    },
+                  },
+                },
+                categories: {
+                  $map: {
+                    input: "$categoryData",
+                    as: "cat",
+                    in: {
+                      _id: "$$cat._id",
+                      name: "$$cat.name",
+                      slug: "$$cat.slug",
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          totals: [
+            {
+              $group: {
+                _id: null,
+                ordered_quantity: { $sum: "$quantity" },
+                packed_quantity: { $sum: "$packed_quantity" },
+              },
+            },
+          ],
+        },
+      },
+
       {
         $project: {
-          order_id: "$_id",
-          user: "$orderData.user",
-          shipping_address: "$orderData.shipping_address",
-          billing_address: "$orderData.billing_address",
-          payment_status: "$orderData.payment_status",
-          order_status: "$orderData.order_status",
-          total_amount: "$orderData.total_amount",
-          grand_total: "$orderData.grand_total",
-          created_at: "$orderData.created_at",
-          products: 1,
+          items: 1,
+          totals: { $ifNull: [{ $arrayElemAt: ["$totals", 0] }, {}] },
         },
       },
     ]);
-    let data = new OrderPickupDetailsResource(results[0]).exec();
+
+    const data = new OrderPickupDetailsResource({
+      id: order.id,
+      _id: order._id,
+      user: order.user,
+      shipping_address: order.shipping_address,
+      billing_address: order.billing_address,
+      payment_status: order.payment_status,
+      order_status: order.order_status,
+      total_amount: order.total_amount,
+      grand_total: order.grand_total,
+      created_at: order.created_at,
+      order_items: items,
+      ordered_quantity: totals.ordered_quantity || 0,
+      packed_quantity: totals.packed_quantity || 0,
+    }).exec();
 
     res.status(200).json({
       status: "success",
@@ -124,6 +165,7 @@ export const order_details = async (req, res, next) => {
       data,
     });
   } catch (error) {
+    console.error("❌ order_details error:", error.message);
     next(error);
   }
 };

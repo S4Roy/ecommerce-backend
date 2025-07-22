@@ -1,6 +1,7 @@
 import Order from "../../../../models/Order.js";
 import { StatusError, envs } from "../../../../config/index.js";
 import mongoose from "mongoose";
+import OrderResource from "../../../../resources/OrderResource.js";
 
 export const list = async (req, res, next) => {
   try {
@@ -16,6 +17,8 @@ export const list = async (req, res, next) => {
 
     const { slug = null } = req.params;
 
+    const isDetail = !!(_id || slug);
+
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -23,7 +26,6 @@ export const list = async (req, res, next) => {
     };
 
     const matchFilter = { deleted_at: null };
-
     if (slug) matchFilter.slug = slug;
     if (_id) matchFilter._id = new mongoose.Types.ObjectId(_id);
     if (order_status) matchFilter.order_status = order_status;
@@ -49,38 +51,6 @@ export const list = async (req, res, next) => {
       },
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
 
-      // Billing address
-      {
-        $lookup: {
-          from: "addresses",
-          localField: "billing_address",
-          foreignField: "_id",
-          as: "billing_address",
-        },
-      },
-      {
-        $unwind: {
-          path: "$billing_address",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // Shipping address
-      {
-        $lookup: {
-          from: "addresses",
-          localField: "shipping_address",
-          foreignField: "_id",
-          as: "shipping_address",
-        },
-      },
-      {
-        $unwind: {
-          path: "$shipping_address",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
       // Lookup order items
       {
         $lookup: {
@@ -90,79 +60,120 @@ export const list = async (req, res, next) => {
           as: "order_items",
         },
       },
-
-      // Expand order_items to process product + image lookups
-      { $unwind: { path: "$order_items", preserveNullAndEmptyArrays: true } },
-
-      // Lookup product in order_item
-      {
-        $lookup: {
-          from: "products",
-          localField: "order_items.product_id",
-          foreignField: "_id",
-          as: "product_doc",
-        },
-      },
-      {
-        $unwind: {
-          path: "$product_doc",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
-      // Lookup images for product
-      {
-        $lookup: {
-          from: "medias",
-          localField: "product_doc.images",
-          foreignField: "_id",
-          as: "product_images",
-        },
-      },
-
-      // Rebuild order_item
-      {
-        $addFields: {
-          "order_items.product": {
-            $mergeObjects: ["$product_doc", { images: "$product_images" }],
-          },
-        },
-      },
-
-      // Group all order_items back
-      {
-        $group: {
-          _id: "$_id",
-          doc: { $first: "$$ROOT" },
-          order_items: { $push: "$order_items" },
-        },
-      },
-      {
-        $addFields: {
-          "doc.order_items": "$order_items",
-        },
-      },
-      {
-        $replaceRoot: { newRoot: "$doc" },
-      },
     ];
 
+    // If details view, enrich with address, product, and media
+    if (isDetail) {
+      pipeline.push(
+        // Billing address
+        {
+          $lookup: {
+            from: "addresses",
+            localField: "billing_address",
+            foreignField: "_id",
+            as: "billing_address",
+          },
+        },
+        {
+          $unwind: {
+            path: "$billing_address",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // Shipping address
+        {
+          $lookup: {
+            from: "addresses",
+            localField: "shipping_address",
+            foreignField: "_id",
+            as: "shipping_address",
+          },
+        },
+        {
+          $unwind: {
+            path: "$shipping_address",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        // Expand order_items to get product info
+        { $unwind: { path: "$order_items", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "products",
+            localField: "order_items.product_id",
+            foreignField: "_id",
+            as: "product_doc",
+          },
+        },
+        {
+          $unwind: {
+            path: "$product_doc",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "medias",
+            localField: "product_doc.images",
+            foreignField: "_id",
+            as: "product_images",
+          },
+        },
+        {
+          $addFields: {
+            "order_items.product": {
+              $mergeObjects: ["$product_doc", { images: "$product_images" }],
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            doc: { $first: "$$ROOT" },
+            order_items: { $push: "$order_items" },
+          },
+        },
+        {
+          $addFields: {
+            "doc.order_items": "$order_items",
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$doc" },
+        }
+      );
+    } else {
+      // LIST view: project minimal fields
+      pipeline.push({
+        $project: {
+          id: 1,
+          order_status: 1,
+          user: 1,
+          created_at: 1,
+          grand_total: 1,
+          "order_items.product_id": 1,
+        },
+      });
+    }
+
     let data;
-    if (slug || _id) {
+
+    if (isDetail) {
       const result = await Order.aggregate(pipeline);
       if (!result.length) throw StatusError.notFound(req.__("Order not found"));
-      data = result[0];
+      data = new OrderResource(result[0]).exec();
     } else {
       const agg = Order.aggregate(pipeline);
       const result = await Order.aggregatePaginate(agg, options);
+      result.docs = await OrderResource.collection(result.docs);
       data = result;
     }
 
     res.status(200).json({
       status: "success",
-      message: req.__(
-        `${slug || _id ? "Details" : "List"} fetched successfully`
-      ),
+      message: req.__(`${isDetail ? "Details" : "List"} fetched successfully`),
       data,
     });
   } catch (error) {

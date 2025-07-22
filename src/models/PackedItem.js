@@ -10,7 +10,7 @@ const PackedItemSchema = new Schema(
       required: true,
     },
     order_item_id: { type: Schema.Types.ObjectId, ref: "order_items" }, // Optional link to specific item
-    sku: { type: String, required: true, trim: true, lowercase: true },
+    sku: { type: String, required: true, trim: true },
     packed_by: { type: Schema.Types.ObjectId, ref: "users", required: true },
     serial: { type: String }, // Optional serial number (for electronics etc.)
     packed_at: { type: Date, default: Date.now },

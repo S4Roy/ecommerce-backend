@@ -24,7 +24,7 @@ class OrderPickupDetailsResource extends Resource {
       shipping_address: this.shipping_address
         ? new AddressResource(this.shipping_address).exec()
         : null,
-      products: (this.products || []).map((item) => {
+      order_items: (this.order_items || []).map((item) => {
         return {
           product_id: item.product_id || null,
           sku: item.sku || null,
@@ -43,6 +43,8 @@ class OrderPickupDetailsResource extends Resource {
       note: this.note || null,
       created_at: this.created_at || null,
       updated_at: this.updated_at || null,
+      ordered_quantity: this.ordered_quantity || 0,
+      packed_quantity: this.packed_quantity || 0,
     };
   }
 }

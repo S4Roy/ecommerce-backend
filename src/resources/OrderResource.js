@@ -2,23 +2,10 @@ import Resource from "resources.js";
 import UserResource from "./UserResource.js";
 import AddressResource from "./AddressResource.js";
 import MediaResource from "./MediaResource.js"; // make sure this handles collections
+import CategoryResourceMinimal from "./CategoryResourceMinimal.js"; // make sure collection() method exists
 
 class OrderResource extends Resource {
   toArray() {
-    const productMap = {};
-    (this.product_details || []).forEach((prod) => {
-      productMap[prod._id?.toString()] = prod;
-    });
-    // Build media map by product ID (ref_id)
-    const mediaMap = {};
-    (this.product_images || []).forEach((media) => {
-      const refId = media.reference_id?.toString?.();
-      if (!refId) return;
-
-      if (!mediaMap[refId]) mediaMap[refId] = [];
-      mediaMap[refId].push(media);
-    });
-
     return {
       _id: this._id || null,
       id: this.id || null,
@@ -38,21 +25,21 @@ class OrderResource extends Resource {
       shipping_address: this.shipping_address
         ? new AddressResource(this.shipping_address).exec()
         : null,
-      products: (this.products || []).map((item) => {
-        const prodId = item.product?.toString();
-        const productInfo = productMap[prodId] || {};
-        const images = mediaMap[prodId] || [];
-
+      order_items: (this.order_items || []).map((item) => {
         return {
-          product_id: productInfo._id || null,
-          sku: productInfo.sku || null,
-          name: productInfo.name || null,
-          slug: productInfo.slug || null,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          packed: item.packed || [],
-          images: MediaResource.collection(images),
+          product_id: item.product?._id || null,
+          sku: item.product?.sku || null,
+          name: item.product?.name || null,
+          slug: item.product?.slug || null,
+          shipping: item.product?.shipping || null,
+          quantity: item?.quantity || 0,
+          current_stock: item.current_stock || 0,
+          unit_price: item.unit_price || 0,
+          total_price: item.total_price || 0,
+          images: MediaResource.collection(item.product?.images || []),
+          categories: CategoryResourceMinimal.collection(
+            item.product?.categories || []
+          ),
         };
       }),
       note: this.note || null,

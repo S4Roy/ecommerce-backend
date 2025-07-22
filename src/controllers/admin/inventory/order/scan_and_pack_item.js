@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 import Product from "../../../../models/Product.js";
-import { StatusError } from "../../../../config/index.js";
-import { envs } from "../../../../config/index.js";
+import PackedItem from "../../../../models/PackedItem.js";
+import { StatusError, envs } from "../../../../config/index.js";
 
-export const picked_item_by_sku = async (req, res, next) => {
+export const scan_and_pack_item = async (req, res, next) => {
   try {
     const { sku, order_id } = req.query;
+    const user_id = req.auth.user_id; // 📌 Authenticated packer
 
     if (!sku || !order_id) {
       throw new StatusError(400, "Both 'sku' and 'order_id' are required.");
@@ -15,13 +16,10 @@ export const picked_item_by_sku = async (req, res, next) => {
       throw new StatusError(400, "Invalid Order ID format.");
     }
 
-    const pipeline = [
-      {
-        $match: { sku: sku },
-      },
-      {
-        $limit: 1,
-      },
+    // STEP 1: Look up the product, order item, and packed count
+    const [result] = await Product.aggregate([
+      { $match: { sku: sku } },
+      { $limit: 1 },
       {
         $lookup: {
           from: "order_items",
@@ -39,9 +37,7 @@ export const picked_item_by_sku = async (req, res, next) => {
                 },
               },
             },
-            {
-              $limit: 1,
-            },
+            { $limit: 1 },
             {
               $lookup: {
                 from: "packed_items",
@@ -80,9 +76,9 @@ export const picked_item_by_sku = async (req, res, next) => {
           as: "orderItem",
         },
       },
-      {
-        $unwind: "$orderItem",
-      },
+      { $unwind: "$orderItem" },
+
+      // Lookups for media, brand, etc.
       {
         $lookup: {
           from: "brands",
@@ -91,12 +87,8 @@ export const picked_item_by_sku = async (req, res, next) => {
           as: "brand",
         },
       },
-      {
-        $unwind: {
-          path: "$brand",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+      { $unwind: { path: "$brand", preserveNullAndEmptyArrays: true } },
+
       {
         $lookup: {
           from: "categories",
@@ -109,11 +101,13 @@ export const picked_item_by_sku = async (req, res, next) => {
       {
         $lookup: {
           from: "medias",
-          localField: "images", // 🔹 Reference to Media IDs
+          localField: "images",
           foreignField: "_id",
           as: "media",
         },
       },
+
+      // Final projection
       {
         $project: {
           _id: 0,
@@ -140,9 +134,7 @@ export const picked_item_by_sku = async (req, res, next) => {
               as: "img",
               in: {
                 _id: "$$img._id",
-                url: {
-                  $concat: [envs.s3.BASE_URL, "$$img.url"],
-                },
+                url: { $concat: [envs.s3.BASE_URL, "$$img.url"] },
                 alt: "$$img.alt",
               },
             },
@@ -159,26 +151,50 @@ export const picked_item_by_sku = async (req, res, next) => {
           packed: "$orderItem.packed",
         },
       },
-    ];
+    ]);
 
-    const result = await Product.aggregate(pipeline);
-
-    if (!result.length) {
-      throw new StatusError(
-        404,
-        "No matching product/order combination found."
-      );
+    if (!result) {
+      throw new StatusError(404, "Item not found in this order.");
     }
+
+    const { ordered_quantity, packed_quantity } = result;
+
+    // STEP 2: Validate if more can be packed
+    if (packed_quantity >= ordered_quantity) {
+      return res.status(409).json({
+        status: "warning",
+        message: "All items already packed for this SKU.",
+        data: result,
+      });
+    }
+
+    // STEP 3: Insert new packed item
+    const packed = await PackedItem.create({
+      order_id: result.order_id,
+      product_id: result.product_id,
+      order_item_id: result.order_item_id,
+      sku: result.sku,
+      packed_by: user_id,
+      // Optionally add: serial, package_no, etc.
+    });
+
+    // STEP 4: Respond with updated status
+    result.packed_quantity += 1;
+    result.packed.push({
+      _id: packed._id,
+      packed_by: packed.packed_by,
+      packed_at: packed.packed_at,
+      label_printed: packed.label_printed,
+      package_no: packed.package_no,
+    });
 
     return res.status(200).json({
       status: "success",
-      message:
-        result[0].packed_quantity > 0
-          ? "Picked item fetched successfully"
-          : "Item found but not yet picked",
-      data: result[0],
+      message: "Item packed successfully",
+      data: result,
     });
   } catch (error) {
+    console.error("❌ scan_and_pack_item error:", error);
     next(error);
   }
 };
