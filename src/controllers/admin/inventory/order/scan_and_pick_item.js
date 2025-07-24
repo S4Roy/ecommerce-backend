@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Product from "../../../../models/Product.js";
-import PackedItem from "../../../../models/PackedItem.js";
+import PickedItem from "../../../../models/PickedItem.js";
 import { StatusError, envs } from "../../../../config/index.js";
 
 export const scan_and_pick_item = async (req, res, next) => {
@@ -40,7 +40,7 @@ export const scan_and_pick_item = async (req, res, next) => {
             { $limit: 1 },
             {
               $lookup: {
-                from: "packed_items",
+                from: "picked_items",
                 let: { orderId: "$order_id", productId: "$product_id" },
                 pipeline: [
                   {
@@ -169,12 +169,12 @@ export const scan_and_pick_item = async (req, res, next) => {
     }
 
     // STEP 3: Insert new packed item
-    const packed = await PackedItem.create({
+    const packed = await PickedItem.create({
       order_id: result.order_id,
       product_id: result.product_id,
       order_item_id: result.order_item_id,
       sku: result.sku,
-      packed_by: user_id,
+      picked_by: user_id,
       // Optionally add: serial, package_no, etc.
     });
 
