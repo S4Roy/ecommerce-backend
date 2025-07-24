@@ -4,7 +4,7 @@ import AddressResource from "./AddressResource.js";
 import MediaResource from "./MediaResource.js"; // make sure collection() method exists
 import CategoryResourceMinimal from "./CategoryResourceMinimal.js"; // make sure collection() method exists
 
-class OrderPickupDetailsResource extends Resource {
+class PackedItemDetailsResource extends Resource {
   toArray() {
     return {
       _id: this._id || null,
@@ -24,7 +24,7 @@ class OrderPickupDetailsResource extends Resource {
       shipping_address: this.shipping_address
         ? new AddressResource(this.shipping_address).exec()
         : null,
-      order_items: (this.order_items || []).map((item) => {
+      packed_items: (this.packed_items || []).map((item) => {
         return {
           product_id: item.product_id || null,
           sku: item.sku || null,
@@ -49,4 +49,4 @@ class OrderPickupDetailsResource extends Resource {
   }
 }
 
-export default OrderPickupDetailsResource;
+export default PackedItemDetailsResource;

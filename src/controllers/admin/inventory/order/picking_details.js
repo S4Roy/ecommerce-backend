@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 import Order from "../../../../models/Order.js";
 import OrderItem from "../../../../models/OrderItem.js";
 import { StatusError } from "../../../../config/index.js";
-import OrderPickupDetailsResource from "../../../../resources/OrderPickupDetailsResource.js";
+import PickedItemDetailsResource from "../../../../resources/PickedItemDetailsResource.js";
 
-export const order_details = async (req, res, next) => {
+export const picking_details = async (req, res, next) => {
   try {
     const { _id = null } = req.query;
 
@@ -14,10 +14,7 @@ export const order_details = async (req, res, next) => {
 
     const orderId = new mongoose.Types.ObjectId(_id);
 
-    const order = await Order.findById(orderId)
-      .populate("user")
-      .populate("shipping_address")
-      .populate("billing_address");
+    const order = await Order.findById(orderId);
 
     if (!order) {
       throw new StatusError(404, "Order not found");
@@ -143,13 +140,9 @@ export const order_details = async (req, res, next) => {
       },
     ]);
 
-    const data = new OrderPickupDetailsResource({
+    const data = new PickedItemDetailsResource({
       id: order.id,
       _id: order._id,
-      user: order.user,
-      shipping_address: order.shipping_address,
-      billing_address: order.billing_address,
-      payment_status: order.payment_status,
       order_status: order.order_status,
       total_amount: order.total_amount,
       grand_total: order.grand_total,

@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 import Order from "../../../../models/Order.js";
+import PackedItem from "../../../../models/PackedItem.js";
 import OrderItem from "../../../../models/OrderItem.js";
 import { StatusError } from "../../../../config/index.js";
-import OrderPickupDetailsResource from "../../../../resources/OrderPickupDetailsResource.js";
+import PackedItemDetailsResource from "../../../../resources/PackedItemDetailsResource.js";
 
-export const order_details = async (req, res, next) => {
+export const packing_details = async (req, res, next) => {
   try {
     const { _id = null } = req.query;
 
@@ -13,19 +14,16 @@ export const order_details = async (req, res, next) => {
     }
 
     const orderId = new mongoose.Types.ObjectId(_id);
-
-    const order = await Order.findById(orderId)
-      .populate("user")
-      .populate("shipping_address")
-      .populate("billing_address");
+    const order = await Order.findById(orderId);
 
     if (!order) {
       throw new StatusError(404, "Order not found");
     }
 
-    const [{ items = [], totals = {} } = {}] = await OrderItem.aggregate([
+    const [{ items = [], totals = {} } = {}] = await PackedItem.aggregate([
       { $match: { order_id: order._id } },
 
+      // Join product details
       {
         $lookup: {
           from: "products",
@@ -36,6 +34,7 @@ export const order_details = async (req, res, next) => {
       },
       { $unwind: "$productInfo" },
 
+      // Join product images
       {
         $lookup: {
           from: "medias",
@@ -44,6 +43,8 @@ export const order_details = async (req, res, next) => {
           as: "imagesData",
         },
       },
+
+      // Join categories
       {
         $lookup: {
           from: "categories",
@@ -52,39 +53,10 @@ export const order_details = async (req, res, next) => {
           as: "categoryData",
         },
       },
-      {
-        $lookup: {
-          from: "picked_items",
-          let: { orderId: "$order_id", productId: "$product_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$order_id", "$$orderId"] },
-                    { $eq: ["$product_id", "$$productId"] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "pickedData",
-        },
-      },
-
-      {
-        $addFields: {
-          picked_quantity: { $size: "$pickedData" },
-          unpacked_quantity: {
-            $subtract: ["$quantity", { $size: "$pickedData" }],
-          },
-        },
-      },
 
       {
         $facet: {
           items: [
-            { $sort: { unpacked_quantity: -1 } },
             {
               $project: {
                 product_id: 1,
@@ -92,12 +64,8 @@ export const order_details = async (req, res, next) => {
                 sku: "$productInfo.sku",
                 name: "$productInfo.name",
                 slug: "$productInfo.slug",
-                shipping: "$productInfo.shipping",
-                unit_price: 1,
-                total_price: 1,
                 ordered_quantity: "$quantity",
                 picked_quantity: 1,
-                current_stock: "$productInfo.current_stock",
                 images: {
                   $map: {
                     input: "$imagesData",
@@ -123,15 +91,6 @@ export const order_details = async (req, res, next) => {
               },
             },
           ],
-          totals: [
-            {
-              $group: {
-                _id: null,
-                ordered_quantity: { $sum: "$quantity" },
-                picked_quantity: { $sum: "$picked_quantity" },
-              },
-            },
-          ],
         },
       },
 
@@ -143,29 +102,25 @@ export const order_details = async (req, res, next) => {
       },
     ]);
 
-    const data = new OrderPickupDetailsResource({
+    const data = new PackedItemDetailsResource({
       id: order.id,
       _id: order._id,
-      user: order.user,
-      shipping_address: order.shipping_address,
-      billing_address: order.billing_address,
-      payment_status: order.payment_status,
       order_status: order.order_status,
       total_amount: order.total_amount,
       grand_total: order.grand_total,
       created_at: order.created_at,
-      order_items: items,
+      packed_items: items,
       ordered_quantity: totals.ordered_quantity || 0,
       picked_quantity: totals.picked_quantity || 0,
     }).exec();
 
     res.status(200).json({
       status: "success",
-      message: req.__(`Details fetched successfully`),
+      message: req.__("Packed items fetched successfully"),
       data,
     });
   } catch (error) {
-    console.error("❌ order_details error:", error.message);
+    console.error("❌ packing_details error:", error.message);
     next(error);
   }
 };

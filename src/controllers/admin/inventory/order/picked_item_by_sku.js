@@ -61,7 +61,7 @@ export const picked_item_by_sku = async (req, res, next) => {
                     $project: {
                       _id: 1,
                       serial: 1,
-                      packed_by: 1,
+                      picked_by: 1,
                       packed_at: 1,
                       label_printed: 1,
                       package_no: 1,
@@ -73,7 +73,7 @@ export const picked_item_by_sku = async (req, res, next) => {
             },
             {
               $addFields: {
-                packed_quantity: { $size: "$packed" },
+                picked_quantity: { $size: "$packed" },
               },
             },
           ],
@@ -155,7 +155,7 @@ export const picked_item_by_sku = async (req, res, next) => {
           order_id: "$orderItem.order_id",
           order_item_id: "$orderItem._id",
           ordered_quantity: "$orderItem.quantity",
-          packed_quantity: "$orderItem.packed_quantity",
+          picked_quantity: "$orderItem.picked_quantity",
           packed: "$orderItem.packed",
         },
       },
@@ -173,7 +173,7 @@ export const picked_item_by_sku = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message:
-        result[0].packed_quantity > 0
+        result[0].picked_quantity > 0
           ? "Picked item fetched successfully"
           : "Item found but not yet picked",
       data: result[0],

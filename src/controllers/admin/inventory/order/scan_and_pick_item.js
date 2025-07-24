@@ -3,10 +3,10 @@ import Product from "../../../../models/Product.js";
 import PackedItem from "../../../../models/PackedItem.js";
 import { StatusError, envs } from "../../../../config/index.js";
 
-export const scan_and_pack_item = async (req, res, next) => {
+export const scan_and_pick_item = async (req, res, next) => {
   try {
     const { sku, order_id } = req.query;
-    const user_id = req.auth?.user_id;
+    const user_id = req.auth.user_id; // 📌 Authenticated packer
 
     if (!sku || !order_id) {
       throw new StatusError(400, "Both 'sku' and 'order_id' are required.");
@@ -16,13 +16,10 @@ export const scan_and_pack_item = async (req, res, next) => {
       throw new StatusError(400, "Invalid Order ID format.");
     }
 
-    const orderObjectId = new mongoose.Types.ObjectId(order_id);
-
-    // STEP 1: Lookup product, order item, packed count
+    // STEP 1: Look up the product, order item, and packed count
     const [result] = await Product.aggregate([
-      { $match: { sku } },
+      { $match: { sku: sku } },
       { $limit: 1 },
-
       {
         $lookup: {
           from: "order_items",
@@ -33,7 +30,9 @@ export const scan_and_pack_item = async (req, res, next) => {
                 $expr: {
                   $and: [
                     { $eq: ["$product_id", "$$productId"] },
-                    { $eq: ["$order_id", orderObjectId] },
+                    {
+                      $eq: ["$order_id", new mongoose.Types.ObjectId(order_id)],
+                    },
                   ],
                 },
               },
@@ -42,10 +41,7 @@ export const scan_and_pack_item = async (req, res, next) => {
             {
               $lookup: {
                 from: "packed_items",
-                let: {
-                  orderId: "$order_id",
-                  productId: "$product_id",
-                },
+                let: { orderId: "$order_id", productId: "$product_id" },
                 pipeline: [
                   {
                     $match: {
@@ -60,7 +56,7 @@ export const scan_and_pack_item = async (req, res, next) => {
                   {
                     $project: {
                       _id: 1,
-                      quantity: 1,
+                      serial: 1,
                       picked_by: 1,
                       packed_at: 1,
                       label_printed: 1,
@@ -73,7 +69,7 @@ export const scan_and_pack_item = async (req, res, next) => {
             },
             {
               $addFields: {
-                picked_quantity: { $sum: "$packed.quantity" },
+                picked_quantity: { $size: "$packed" },
               },
             },
           ],
@@ -82,7 +78,7 @@ export const scan_and_pack_item = async (req, res, next) => {
       },
       { $unwind: "$orderItem" },
 
-      // Lookups
+      // Lookups for media, brand, etc.
       {
         $lookup: {
           from: "brands",
@@ -101,6 +97,7 @@ export const scan_and_pack_item = async (req, res, next) => {
           as: "categories",
         },
       },
+
       {
         $lookup: {
           from: "medias",
@@ -142,11 +139,11 @@ export const scan_and_pack_item = async (req, res, next) => {
               },
             },
           },
-          sku: "$sku",
           slug: "$slug",
+          shipping: "$shipping",
+          sku: "$sku",
           name: "$name",
           current_stock: "$current_stock",
-          shipping: "$shipping",
           order_id: "$orderItem.order_id",
           order_item_id: "$orderItem._id",
           ordered_quantity: "$orderItem.quantity",
@@ -162,7 +159,7 @@ export const scan_and_pack_item = async (req, res, next) => {
 
     const { ordered_quantity, picked_quantity } = result;
 
-    // STEP 2: Validate packing limit
+    // STEP 2: Validate if more can be packed
     if (picked_quantity >= ordered_quantity) {
       return res.status(409).json({
         status: "warning",
@@ -172,24 +169,23 @@ export const scan_and_pack_item = async (req, res, next) => {
     }
 
     // STEP 3: Insert new packed item
-    const packedItem = await PackedItem.create({
+    const packed = await PackedItem.create({
       order_id: result.order_id,
       product_id: result.product_id,
       order_item_id: result.order_item_id,
       sku: result.sku,
-      quantity: 1,
       packed_by: user_id,
+      // Optionally add: serial, package_no, etc.
     });
 
-    // STEP 4: Prepare updated response
+    // STEP 4: Respond with updated status
     result.picked_quantity += 1;
     result.packed.push({
-      _id: packedItem._id,
-      quantity: packedItem.quantity,
-      picked_by: packedItem.packed_by,
-      packed_at: packedItem.createdAt,
-      label_printed: packedItem.label_printed,
-      package_no: packedItem.package_no,
+      _id: packed._id,
+      picked_by: packed.picked_by,
+      packed_at: packed.packed_at,
+      label_printed: packed.label_printed,
+      package_no: packed.package_no,
     });
 
     return res.status(200).json({
