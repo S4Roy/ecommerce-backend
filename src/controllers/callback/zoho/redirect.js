@@ -18,7 +18,7 @@ export const redirect = async (req, res, next) => {
     res.status(200).json({
       status: "success",
       message: req.__("Zoho redirect successful"),
-      data: { code: code },
+      data: { ...req.query },
     });
   } catch (error) {
     next(error);
