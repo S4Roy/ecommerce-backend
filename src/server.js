@@ -74,6 +74,11 @@ app.use(bearerToken());
 app.use(StatusSuccess);
 // Define API Routes
 // app.use(`${envs.basePath}/`, indexRoutes);
+
+app.get(`${envs.basePath || ""}/`, (req, res) => {
+  res.status(200).json({ status: "ok", message: "Base path is working" });
+});
+
 app.use(`${envs.basePath}/api/v1/auth`, v1AuthRouter);
 
 app.use(

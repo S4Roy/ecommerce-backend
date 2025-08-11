@@ -1,6 +1,5 @@
-import Address from "../../../models/Address.js";
+import { zohoService } from "../../../services/index.js";
 import { StatusError } from "../../../config/index.js";
-
 /**
  * Zoho redirect controller
  * Handles the redirect after Zoho OAuth authentication.
@@ -9,7 +8,7 @@ import { StatusError } from "../../../config/index.js";
  * @param res
  * @param next
  */
-export const redirect = async (req, res, next) => {
+export const code = async (req, res, next) => {
   try {
     // Extract the code from the query parameters
     const { code } = req.query;

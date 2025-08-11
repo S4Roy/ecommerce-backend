@@ -6,11 +6,13 @@ import * as emailService from "./email/index.js";
 import * as awsService from "./awsService/index.js";
 import * as s3HandlerService from "./s3Handler/index.js";
 import * as userRoleService from "./userRole/index.js";
+import * as zohoService from "./zoho/index.js";
 
 export {
   userService,
   userRoleService,
   emailService,
+  zohoService,
   emailTemplateService,
   awsService,
   s3HandlerService,

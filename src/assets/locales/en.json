@@ -68,5 +68,6 @@
 	"Products imported successfully": "Products imported successfully",
 	"Order not found": "Order not found",
 	"Order status counts fetched successfully": "Order status counts fetched successfully",
-	"Packed items fetched successfully": "Packed items fetched successfully"
+	"Packed items fetched successfully": "Packed items fetched successfully",
+	"Zoho redirect successful": "Zoho redirect successful"
 }

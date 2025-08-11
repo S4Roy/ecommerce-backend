@@ -1,6 +1,3 @@
-import { generateTokens } from "./generateToken.js";
-import { verifyToken } from "./verifyToken.js";
-import { generateResetToken } from "./generateResetToken.js";
-import { verifyResetToken } from "./verifyResetToken.js";
+import { exchangeCodeForToken } from "./exchangeCodeForToken.js";
 
-export { generateTokens, verifyToken, generateResetToken, verifyResetToken };
+export { exchangeCodeForToken };
