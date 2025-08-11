@@ -1,3 +1,3 @@
-import { exchangeCodeForToken } from "./exchangeCodeForToken.js";
+import { getZohoTokens } from "./getZohoTokens.js";
 
-export { exchangeCodeForToken };
+export { getZohoTokens };

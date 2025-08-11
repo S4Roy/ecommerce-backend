@@ -48,6 +48,7 @@ export const envs = {
     ORG_ID: process.env.ZOHO_ORG_ID || "",
     CLIENT_ID: process.env.ZOHO_CLIENT_ID || "",
     CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || "",
+    CODE: process.env.ZOHO_CODE || "",
     REFRESH_TOKEN: process.env.ZOHO_REFRESH_TOKEN || "",
     ACCESS_TOKEN: process.env.ZOHO_ACCESS_TOKEN || "",
     BASE_URL: process.env.ZOHO_BASE_URL || "https://books.zoho.com/api/v3",
