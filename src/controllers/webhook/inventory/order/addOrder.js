@@ -6,6 +6,7 @@ import Address from "../../../../models/Address.js";
 import Product from "../../../../models/Product.js";
 import StockTransaction from "../../../../models/StockTransaction.js";
 import { StatusError } from "../../../../config/index.js";
+import { zohoService } from "../../../../services/index.js";
 
 export const addOrder = async (req, res, next) => {
   try {
@@ -35,6 +36,7 @@ export const addOrder = async (req, res, next) => {
 
     // 👤 2. Find or create user
     let user = await User.findOne({ email: customer.email });
+
     if (!user) {
       console.log(`👤 Creating new user for ${customer.email}`);
       user = await User.create({
@@ -45,6 +47,41 @@ export const addOrder = async (req, res, next) => {
         password: "external_order",
         status: "active",
       });
+    }
+    if (!user?.zoho_sutomer_id) {
+      let zoho_customer = {
+        contact_name: user.name,
+        email: user.email,
+        billing_address: {
+          address: billing_address.address_1 + " " + billing_address.address_2,
+          city: billing_address.city,
+          state: billing_address.state,
+          zip: billing_address.postcode,
+          country: billing_address.country,
+        },
+        shipping_address: {
+          address:
+            shipping_address.address_1 + " " + shipping_address.address_2,
+          city: shipping_address.city,
+          state: shipping_address.state,
+          zip: shipping_address.postcode,
+          country: shipping_address.country,
+        },
+      };
+      console.log("Zoho Customer Data:", zoho_customer);
+
+      const createCustomerResponse = await zohoService.createCustomer(
+        zoho_customer
+      );
+      if (createCustomerResponse?.data?.customer) {
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          {
+            zoho_customer_id: createCustomerResponse.data.contact.contact_id,
+          },
+          { new: true }
+        );
+      }
     }
 
     // 🏠 3. Billing address

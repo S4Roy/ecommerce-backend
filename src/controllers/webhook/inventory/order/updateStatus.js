@@ -4,11 +4,11 @@ import User from "../../../../models/User.js";
 import Address from "../../../../models/Address.js";
 import { StatusError } from "../../../../config/index.js";
 import mongoose from "mongoose";
-import axios from "axios";
-import fetch from "node-fetch";
+import { zohoService } from "../../../../services/index.js";
 
 export const updateStatus = async (req, res, next) => {
   try {
+    let data = {};
     const { order_id, status } = req.body;
     // Find and update the order by external ID
     const orderDoc = await Order.findOneAndUpdate(
@@ -133,45 +133,31 @@ export const updateStatus = async (req, res, next) => {
 
       const result = await Order.aggregate(pipeline);
       let order = result[0];
-      const invoiceData = {
-        customer_name: `${order.user.name}`,
+
+      const zohoData = {
+        customer_id: order.user.zoho_customer_id,
         reference_number: `${order.id}`,
+        salesperson_name: "Subhankar",
         date: new Date().toISOString().split("T")[0],
         line_items: order.order_items.map((item) => ({
+          item_id: item.product.sku,
           name: item.product.name,
           rate: item.unit_price,
           quantity: item.quantity,
         })),
       };
-      const ORG_ID = "YOUR_ORGANIZATION_ID";
-      const ACCESS_TOKEN = "YOUR_ZOHO_ACCESS_TOKEN";
 
-      try {
-        const zohoRes = await fetch(
-          `https://books.zoho.com/api/v3/invoices?organization_id=${ORG_ID}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Zoho-oauthtoken ${ACCESS_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(invoiceData),
-          }
-        );
+      console.log(zohoData);
 
-        const zohoResult = await zohoRes.json();
-        console.log("Zoho Response:", zohoResult);
-
-        res.json({ status: "success", zoho: zohoResult });
-      } catch (err) {
-        console.error("Error creating Zoho invoice:", err);
-        res.status(500).json({ error: "Failed to create invoice" });
-      }
+      // data.listCustomers = await zohoService.listCustomers();
+      data.invoiceResponse = await zohoService.createInvoice(zohoData);
+      console.log("Zoho Invoice Response:", data.invoiceResponse);
     }
     return res.status(200).json({
       status: "success",
       message: "Order status updated",
       data: {
+        ...data,
         order_id: orderDoc.id,
         order_status: orderDoc.order_status,
       },

@@ -11,16 +11,13 @@ import { StatusError } from "../../../config/index.js";
 export const code = async (req, res, next) => {
   try {
     // Extract the code from the query parameters
-    const { code } = req.query;
-    console.log("Zoho redirect code:", code);
-    const tokenResponse = await zohoService.getZohoTokens();
-    if (!tokenResponse || !tokenResponse.access_token) {
-      throw new StatusError(400, "Failed to exchange Zoho code for tokens");
-    }
+    const token = await zohoService.getTokens();
+    console.log(token);
+
     res.status(200).json({
       status: "success",
-      message: req.__("Zoho redirect successful"),
-      data: { code: code },
+      message: req.__("Zoho token"),
+      data: { token: token },
     });
   } catch (error) {
     next(error);

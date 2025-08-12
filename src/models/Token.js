@@ -2,23 +2,26 @@ import mongoose from "mongoose";
 
 const { Schema, model, Types } = mongoose;
 
-const SiteSettingSchema = new Schema({
-  slug: {
+const TokenSchema = new Schema({
+  provider: {
     type: String,
     required: true,
     unique: true,
   },
-  value: {
+  client_id: {
     type: String,
     required: true,
   },
-  label: {
+  client_secret: {
     type: String,
     required: true,
   },
-  type: {
+  refresh_token: {
     type: String,
     required: true,
+  },
+  access_token: {
+    type: String,
   },
   created_at: {
     type: Date,
@@ -32,12 +35,17 @@ const SiteSettingSchema = new Schema({
     type: Date,
     default: null,
   },
+
   updated_by: {
     type: Types.ObjectId,
     default: null,
   },
+  expires_at: {
+    type: Date,
+    default: null,
+  },
 });
 
-const SiteSetting = model("site_settings", SiteSettingSchema);
+const Token = model("tokens", TokenSchema);
 
-export default SiteSetting;
+export default Token;

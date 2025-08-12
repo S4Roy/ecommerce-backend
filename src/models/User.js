@@ -53,6 +53,11 @@ const UserSchema = new Schema(
       required: false,
       default: null,
     },
+    zoho_customer_id: {
+      type: String,
+      required: false,
+      default: null,
+    },
     status: {
       type: String,
       required: true,
