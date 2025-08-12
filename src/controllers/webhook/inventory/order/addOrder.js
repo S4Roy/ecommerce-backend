@@ -48,36 +48,39 @@ export const addOrder = async (req, res, next) => {
         status: "active",
       });
     }
-    if (!user?.zoho_sutomer_id) {
+    if (!user?.zoho_customer_id) {
       let zoho_customer = {
         contact_name: user.name,
         email: user.email,
         billing_address: {
-          address: billing_address.address_1 + " " + billing_address.address_2,
+          address: `${billing_address.address_1} ${
+            billing_address.address_2 || ""
+          }`,
           city: billing_address.city,
           state: billing_address.state,
           zip: billing_address.postcode,
           country: billing_address.country,
         },
         shipping_address: {
-          address:
-            shipping_address.address_1 + " " + shipping_address.address_2,
+          address: `${shipping_address.address_1} ${
+            shipping_address.address_2 || ""
+          }`,
           city: shipping_address.city,
           state: shipping_address.state,
           zip: shipping_address.postcode,
           country: shipping_address.country,
-          contact_persons: [
-            {
-              salutation: "",
-              first_name: customer.first_name,
-              last_name: customer.last_name,
-              email: customer.email,
-              phone: customer.phone,
-              mobile: customer.mobile,
-              is_primary_contact: true,
-            },
-          ],
         },
+        contact_persons: [
+          {
+            salutation: "",
+            first_name: (customer.first_name || "").slice(0, 50), // safety trimming
+            last_name: (customer.last_name || "").slice(0, 50),
+            email: customer.email || "",
+            phone: customer.phone || "",
+            mobile: customer.mobile || "",
+            is_primary_contact: true,
+          },
+        ],
       };
 
       const createCustomerResponse = await zohoService.createCustomer(
@@ -85,7 +88,7 @@ export const addOrder = async (req, res, next) => {
       );
 
       if (createCustomerResponse?.data?.contact?.contact_id) {
-        const updatedUser = await User.findByIdAndUpdate(
+        await User.findByIdAndUpdate(
           user._id,
           {
             zoho_customer_id: createCustomerResponse.data.contact.contact_id,
