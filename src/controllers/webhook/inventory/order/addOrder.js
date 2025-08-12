@@ -66,16 +66,25 @@ export const addOrder = async (req, res, next) => {
           state: shipping_address.state,
           zip: shipping_address.postcode,
           country: shipping_address.country,
+          contact_persons: [
+            {
+              salutation: "",
+              first_name: customer.first_name,
+              last_name: customer.last_name,
+              email: customer.email,
+              phone: customer.phone,
+              mobile: customer.mobile,
+              is_primary_contact: true,
+            },
+          ],
         },
       };
-      console.log("Zoho Customer Data:", zoho_customer);
 
       const createCustomerResponse = await zohoService.createCustomer(
         zoho_customer
       );
-      console.log("Zoho Customer Response:", createCustomerResponse);
 
-      if (createCustomerResponse?.data?.customer) {
+      if (createCustomerResponse?.data?.contact?.contact_id) {
         const updatedUser = await User.findByIdAndUpdate(
           user._id,
           {
