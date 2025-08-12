@@ -82,6 +82,7 @@ export const addOrder = async (req, res, next) => {
           },
         ],
       };
+      console.log(`📝 Creating Zoho customer for ${zoho_customer}`);
 
       const createCustomerResponse = await zohoService.createCustomer(
         zoho_customer
