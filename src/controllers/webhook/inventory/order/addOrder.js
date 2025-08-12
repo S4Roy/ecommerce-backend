@@ -73,6 +73,8 @@ export const addOrder = async (req, res, next) => {
       const createCustomerResponse = await zohoService.createCustomer(
         zoho_customer
       );
+      console.log("Zoho Customer Response:", createCustomerResponse);
+
       if (createCustomerResponse?.data?.customer) {
         const updatedUser = await User.findByIdAndUpdate(
           user._id,
