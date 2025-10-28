@@ -171,6 +171,7 @@ export const addOrder = async (req, res, next) => {
       order_status: status,
       total_amount: sub_total,
       discount: discountAmount,
+      item_count: items?.length || 0,
       shipping: shippingAmount,
       grand_total: totalAmount,
       payment_method,

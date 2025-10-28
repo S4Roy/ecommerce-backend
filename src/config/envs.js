@@ -44,6 +44,10 @@ export const envs = {
     BUCKET_URL: process.env.S3_BUCKET_URL || "",
     BASE_URL: `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/`,
   },
+  razorpay: {
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  },
   zoho: {
     ORG_ID: process.env.ZOHO_ORG_ID || "",
     CLIENT_ID: process.env.ZOHO_CLIENT_ID || "",

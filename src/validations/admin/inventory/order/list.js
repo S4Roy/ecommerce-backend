@@ -16,6 +16,7 @@ export const list = celebrate({
         "created_at",
         "id",
         "user.name",
+        "item_count",
         "items"
       ),
     sort_order: Joi.number().optional().allow(null).valid(-1, 1),

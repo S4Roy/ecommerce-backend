@@ -42,6 +42,7 @@ class OrderResource extends Resource {
           ),
         };
       }),
+      item_count: this.item_count || null,
       note: this.note || null,
       created_at: this.created_at || null,
       updated_at: this.updated_at || null,

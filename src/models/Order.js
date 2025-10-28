@@ -43,6 +43,7 @@ const OrderSchema = new Schema(
     },
 
     total_amount: { type: Number, required: true },
+    item_count: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },
     grand_total: { type: Number, required: true },
@@ -54,6 +55,10 @@ const OrderSchema = new Schema(
     },
     transaction_id: { type: String },
     note: { type: String },
+    payment_status: { type: String },
+    payment_meta: { type: Object, default: {} }, // optional Razorpay response etc.
+
+    paid_at: { type: Date, default: null },
 
     deleted_at: { type: Date, default: null },
   },
