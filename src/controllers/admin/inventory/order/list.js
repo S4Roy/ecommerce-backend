@@ -131,10 +131,12 @@ export const list = async (req, res, next) => {
                     {
                       $project: {
                         _id: 1,
+                        name: 1,
                         title: 1,
                         slug: 1,
                         sku: 1,
                         type: 1,
+                        quantity: 1,
                         price: 1,
                         images: 1,
                         // include any other necessary product fields here
@@ -162,8 +164,9 @@ export const list = async (req, res, next) => {
                 $project: {
                   _id: 1,
                   product_id: 1,
-                  qty: 1,
-                  price: 1,
+                  quantity: 1,
+                  unit_price: 1,
+                  total_price: 1,
                   variant: 1,
                   product: 1,
                   // any other fields you want to expose
@@ -187,6 +190,10 @@ export const list = async (req, res, next) => {
             billing_address: 1,
             shipping_address: 1,
             order_items: 1,
+            total_amount: 1,
+            shipping: 1,
+            discount: 1,
+            payment_status: 1,
             // include other order-level fields you need
           },
         }
