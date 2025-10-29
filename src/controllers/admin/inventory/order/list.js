@@ -191,6 +191,7 @@ export const list = async (req, res, next) => {
             shipping_address: 1,
             order_items: 1,
             total_amount: 1,
+            item_count: 1,
             shipping: 1,
             discount: 1,
             payment_status: 1,
