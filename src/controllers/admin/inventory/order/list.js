@@ -205,6 +205,7 @@ export const list = async (req, res, next) => {
         $project: {
           id: 1,
           order_status: 1,
+          item_count: 1,
           user: 1,
           created_at: 1,
           grand_total: 1,
